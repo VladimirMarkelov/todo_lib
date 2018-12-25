@@ -10,28 +10,10 @@ pub struct TodoError {
 
 #[derive(Clone, Eq, PartialEq, Debug, Fail)]
 pub enum TodoErrorKind {
-    #[fail(display = "invalid entry: {}", entry)]
-    InvalidSubject { entry: String },
-    #[fail(display = "invalid todo ID: {}", id)]
-    InvalidId { id: usize },
-    #[fail(display = "invalid range: {}", range)]
-    InvalidRange { range: String },
+    #[fail(display = "invalid value {} for {}", value, name)]
+    InvalidValue { value: String, name: String },
     #[fail(display = "failed to save todo list")]
     SaveFailed,
-    #[fail(display = "invalid priority: {}", pri)]
-    InvalidPriority { pri: String },
-    #[fail(display = "invalid date: {}", dt)]
-    InvalidDate { dt: String },
-    #[fail(display = "invalid recurrence: {}", range)]
-    InvalidRecRange { range: String },
-    #[fail(display = "invalid date range: {}", range)]
-    InvalidDateRange { range: String },
-    #[fail(display = "invalid recurrence: {}", rec)]
-    InvalidRecurrence { rec: String },
-    #[fail(display = "invalid project pair: {}", pair)]
-    InvalidProjectPair { pair: String },
-    #[fail(display = "invalid context pair: {}", pair)]
-    InvalidContextPair { pair: String },
     #[fail(display = "I/O Error: {}", err)]
     IOError { err: String },
 }
