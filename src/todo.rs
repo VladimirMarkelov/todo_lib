@@ -1,13 +1,13 @@
 use std::cmp::Ordering;
+use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Write;
-use std::path::{Path};
+use std::path::Path;
 use std::str::FromStr;
-use std::ffi::OsStr;
 
 use crate::terr;
 use crate::tsort;
@@ -26,9 +26,8 @@ pub type TaskVec = Vec<todo_txt::task::Extended>;
 pub type TaskSlice = [todo_txt::task::Extended];
 pub type IDVec = Vec<usize>;
 pub type IDSlice = [usize];
-pub type ChangedList = Vec<bool>;
+pub type ChangedVec = Vec<bool>;
 pub type ChangedSlice = [bool];
-// pub type FnUpdateData = fn (tasks: &mut Vec<todo_txt::task::Extended>, ids: Option<&IDVec>) -> ChangedList;
 
 /// Type of operation applied to todo properties. Every field supports
 /// its own set of operations (except `None` that can be used for all of them):
@@ -156,14 +155,13 @@ pub fn load(filename: &Path) -> TaskVec {
 /// Saves the list of todos into a local file. Returns an error if saving
 /// fails.
 pub fn save(tasks: &TaskSlice, filename: &Path) -> TodoResult {
-    let tmpname = filename.with_extension(OsStr::new(".todo.tmp"));
+    let tmpname = filename.with_extension(OsStr::new("todo.tmp"));
 
-    println!("Saving to {:?}", tmpname);
     let mut output = match File::create(&tmpname) {
         Err(e) => {
-            println!("{:?} - {:?}", tmpname, e);
-            return Err(terr::TodoError::from(terr::TodoErrorKind::SaveFailed))
-        },
+            eprintln!("{:?} - {:?}", tmpname, e);
+            return Err(terr::TodoError::from(terr::TodoErrorKind::SaveFailed));
+        }
         Ok(o) => o,
     };
 
@@ -253,7 +251,7 @@ pub fn add(tasks: &mut TaskVec, c: &Conf) -> usize {
     }
 }
 
-fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedList {
+fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
     if tasks.is_empty() {
         return Vec::new();
     }
@@ -300,7 +298,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedLis
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedList {
+pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
     let c = Conf {
         done: true,
         ..Default::default()
@@ -318,7 +316,7 @@ pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedList {
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn undone(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedList {
+pub fn undone(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
     let c = Conf {
         done: false,
         ..Default::default()
@@ -336,8 +334,8 @@ pub fn undone(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedList {
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-/// Note: all items in `ChangedList` are always `true`.
-pub fn remove(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedList {
+/// Note: all items in `ChangedVec` are always `true`.
+pub fn remove(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
     if tasks.is_empty() {
         return vec![];
     }
@@ -576,7 +574,7 @@ fn update_contexts(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedList {
+pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
     if tasks.is_empty() {
         return vec![];
     }
