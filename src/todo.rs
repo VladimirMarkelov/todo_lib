@@ -185,11 +185,11 @@ pub fn save(tasks: &TaskSlice, filename: &Path) -> TodoResult {
 /// * `filename` - the name of the file to save the data (usually it is `done.txt`)
 ///
 /// Returns true if all todos are saved successfully
-pub fn archive(tasks: &TaskSlice, filename: &str) -> bool {
+pub fn archive(tasks: &TaskSlice, filename: &Path) -> bool {
     // TODO: return an error
     let mut output = match OpenOptions::new().write(true).append(true).create(true).open(&filename) {
         Err(_) => {
-            println!("Failed to open file {} for appending", filename);
+            println!("Failed to open file {:?} for appending", filename);
             return false;
         }
         Ok(o) => o,
