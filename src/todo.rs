@@ -1,3 +1,4 @@
+use failure::ResultExt;
 use std::cmp::Ordering;
 use std::ffi::OsStr;
 use std::fs;
@@ -21,7 +22,6 @@ pub const NO_PRIORITY: u8 = 26u8;
 // pub const TIMER_TAG: &str = "timer";
 // pub const TIMER_OFF: &str = "off";
 
-pub type TodoResult = Result<(), terr::TodoError>;
 pub type TaskVec = Vec<todo_txt::task::Extended>;
 pub type TaskSlice = [todo_txt::task::Extended];
 pub type IDVec = Vec<usize>;
@@ -130,15 +130,13 @@ pub(crate) fn make_id_vec(sz: usize) -> IDVec {
 
 /// Load a list of todo from a file in todo.txt format. If the file does not
 /// exist or cannot be opened the function returns empty list
-pub fn load(filename: &Path) -> TaskVec {
+pub fn load(filename: &Path) -> Result<TaskVec, terr::TodoError> {
     let mut tasks = Vec::new();
-    let file = match File::open(filename) {
-        Ok(f) => f,
-        Err(_) => {
-            // TODO: do it only on file does not exist
-            return tasks;
-        }
-    };
+    if !filename.exists() {
+        return Ok(tasks);
+    }
+
+    let file = File::open(filename).context(terr::TodoErrorKind::LoadFailed)?;
 
     let br = BufReader::new(&file);
     for l in br.lines() {
@@ -149,22 +147,15 @@ pub fn load(filename: &Path) -> TaskVec {
         }
     }
 
-    tasks
+    Ok(tasks)
 }
 
 /// Saves the list of todos into a local file. Returns an error if saving
 /// fails.
-pub fn save(tasks: &TaskSlice, filename: &Path) -> TodoResult {
+pub fn save(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError> {
     let tmpname = filename.with_extension(OsStr::new("todo.tmp"));
 
-    let mut output = match File::create(&tmpname) {
-        Err(e) => {
-            eprintln!("{:?} - {:?}", tmpname, e);
-            return Err(terr::TodoError::from(terr::TodoErrorKind::SaveFailed));
-        }
-        Ok(o) => o,
-    };
-
+    let mut output = File::create(&tmpname).context(terr::TodoErrorKind::SaveFailed)?;
     for t in tasks {
         let line = format!("{}\n", t);
         if write!(output, "{}", line).is_err() {
@@ -185,25 +176,20 @@ pub fn save(tasks: &TaskSlice, filename: &Path) -> TodoResult {
 /// * `filename` - the name of the file to save the data (usually it is `done.txt`)
 ///
 /// Returns true if all todos are saved successfully
-pub fn archive(tasks: &TaskSlice, filename: &Path) -> bool {
-    // TODO: return an error
-    let mut output = match OpenOptions::new().write(true).append(true).create(true).open(&filename) {
-        Err(_) => {
-            println!("Failed to open file {:?} for appending", filename);
-            return false;
-        }
-        Ok(o) => o,
-    };
+pub fn archive(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError> {
+    let mut output = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .create(true)
+        .open(&filename)
+        .context(terr::TodoErrorKind::AppendFailed)?;
 
     for t in tasks {
         let line = format!("{}\n", t);
-        if write!(output, "{}", line).is_err() {
-            println!("Failed to save todo list");
-            return false;
-        }
+        write!(output, "{}", line).context(terr::TodoErrorKind::FileWriteFailed)?;
     }
 
-    true
+    Ok(())
 }
 
 /// Makes a clones of selected todos

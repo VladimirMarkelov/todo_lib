@@ -14,6 +14,12 @@ pub enum TodoErrorKind {
     InvalidValue { value: String, name: String },
     #[fail(display = "failed to save todo list")]
     SaveFailed,
+    #[fail(display = "failed to load todo list")]
+    LoadFailed,
+    #[fail(display = "failed to append to file")]
+    AppendFailed,
+    #[fail(display = "failed to write todo list")]
+    FileWriteFailed,
     #[fail(display = "I/O Error: {}", err)]
     IOError { err: String },
 }
