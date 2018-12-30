@@ -138,11 +138,11 @@ pub struct Conf {
     /// All incomplete, completed, or both types of todos
     pub all: TodoStatus,
 
-    /// Search for a due date
+    /// Search for a due date: any, no due date, or withing range
     pub due: Option<Due>,
     /// Search for a recurrent todos
     pub rec: Option<Recurrence>,
-    /// Search for a priority
+    /// Search for a todos with priority or priority range
     pub pri: Option<Priority>,
 }
 

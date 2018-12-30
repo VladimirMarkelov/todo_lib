@@ -8,7 +8,15 @@ use todo_txt;
 /// reversed
 #[derive(Debug, Clone)]
 pub struct Conf {
-    /// comma separated list of field to sort by
+    /// comma separated list of field to sort by. Supported field names:
+    /// * `pri` or `prioroty` - sort by priority (without priority are the last ones);
+    /// * `due` - sor by due date (todos that do not have due date are at the bottom);
+    /// * `completed` or `finished` - sort by completion date (incomplete ones are at the bottom);
+    /// * `created` or `create` - sort by creation date;
+    /// * `subject`, `subj` or `text` - sort by todo's subjects;
+    /// * `done` - order: incomplete, recurrent, and done todos;
+    /// * `project` or `proj` - sort by project names, if todos have more than one project they are compared in order of appearance and shorter list of projects goes first;
+    /// * `context` or `ctx` - sort by contexts, if todos have more than one context they are compared in order of appearance and shorter list of contexts goes first;
     pub fields: Option<String>,
     /// reverse the list after sorting
     pub rev: bool,
