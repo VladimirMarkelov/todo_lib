@@ -47,7 +47,7 @@ The function gets the list of all todos and filtering rules and returns the list
 Because `sort` is the function that should be called after `filter`, it wants a list of selected todo IDs that must be sorted, the whole todo list (IDs in `ids` are the order numbers of a todo in `todos`) and sorting rules. The function changes `ids` in-place and the sorting is always stable - it keeps the order of todos in the `ids` list for todos that are equal to each other. There are only two sorting rules:
 
 * `fields` - is a comma(or colon) separated list of fields in order of importance for soring. If the vector is empty the list remains unchanged. Supported field names(and their abbreviations):
-    - `pri` or `prioroty` - sort by priority (without priority are the last ones);
+    - `pri` or `priority` - sort by priority (without priority are the last ones);
     - `due` - sor by due date (todos that do not have due date are at the bottom);
     - `completed` or `finished` - sort by completion date (incomplete ones are at the bottom);
     - `created` or `create` - sort by creation date;
