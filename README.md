@@ -29,16 +29,17 @@ It works similar to `save` but appends task list to a given `filename`. It does 
 
 `filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec`
 
-The function gets the list of all todos and filtering rules and returns the list of todo IDs(todo's ID is the order number of the todo in the original list) that matches the rules. If a rule works with strings(e.g, projects or regex), the rule is caseinsensitive. Available rules (if a rule is None the rule is skipped):
+The function gets the list of all todos and filtering rules and returns the list of todo IDs(todo's ID is the order number of the todo in the original list) that matches the rules. If a rule works with strings(e.g, projects or regex), the rule is case-insensitive. Available rules (if a rule is None the rule is skipped):
 
 * `range` - selects one todo by its ID, or a few ones by ID range(inclusive);
 * `all` - selects only all done, only incomplete, or both;
 * `pri` - selects with any priority, without any priority, or with the same/higher/lower priority(inclusive);
 * `regex` - when `use_regex` is true, it does regular expression pattern matching, otherwise it search for a substring. Note: it searches for the `regex` in subject, projects, and contexts;
-* `projects` - selects all todos that have *any* of `projects`. This rule allows a caller to do very basic pattern matching: `*` added to the begining or to the end of a project means to look for a project which name ends or starts respectively with the word, Adding `*` to both ends works like `regex` but checks only projects. `*` in the middle of the word does not have any special meaning - use `regex` in this case;
+* `projects` - selects all todos that have *any* of `projects`. This rule allows a caller to do very basic pattern matching: `*` added to the beginning or to the end of a project means to look for a project which name ends or starts respectively with the word, Adding `*` to both ends works like `regex` but checks only projects. `*` in the middle of the word does not have any special meaning - use `regex` in this case;
 * `contexts` - selects all todos that have *any* of `contexts`. The rule can use `*` in the same way `projects` does;
 * `due` - selects all todos with any due date, without due date, a todo with due date within range, or todos which are less than the number of days ahead;
 * `rec` - selects all recurrent todos or all without recurrent flag.
+* `thr` - selects all todos with any threshold date, without threshold date
 
 ## Sorting
 
@@ -46,15 +47,16 @@ The function gets the list of all todos and filtering rules and returns the list
 
 Because `sort` is the function that should be called after `filter`, it wants a list of selected todo IDs that must be sorted, the whole todo list (IDs in `ids` are the order numbers of a todo in `todos`) and sorting rules. The function changes `ids` in-place and the sorting is always stable - it keeps the order of todos in the `ids` list for todos that are equal to each other. There are only two sorting rules:
 
-* `fields` - is a comma(or colon) separated list of fields in order of importance for soring. If the vector is empty the list remains unchanged. Supported field names(and their abbreviations):
+* `fields` - is a comma(or colon) separated list of fields in order of importance for sorting. If the vector is empty the list remains unchanged. Supported field names(and their abbreviations):
     - `pri` or `priority` - sort by priority (without priority are the last ones);
-    - `due` - sor by due date (todos that do not have due date are at the bottom);
+    - `due` - sort by due date (todos that do not have due date are at the bottom);
     - `completed` or `finished` - sort by completion date (incomplete ones are at the bottom);
     - `created` or `create` - sort by creation date;
     - `subject`, `subj` or `text` - sort by todo's subjects;
     - `done` - order: incomplete, recurrent, and done todos;
     - `project` or `proj` - sort by project names, if todos have more than one project they are compared in order of appearance and shorter list of projects goes first;
     - `context` or `ctx` - sort by contexts, if todos have more than one context they are compared in order of appearance and shorter list of contexts goes first;
+    - `thr` - sort by threshold date (todos that do not have threshold date are at the bottom);
 * `rev` - when it is `true` the sorted list is reversed before returning the result.
 
 ## Editing
@@ -98,6 +100,7 @@ What can be modified:
 * `subject` - set a new one
 * `priority` - set, remove, increase or decrease priority
 * `due date` - set or remove
+* `thresold date` - set or remove
 * `recurrence` - set or remove
 * `projects` - add, remove or replace
 * `contexts` - add, remove or replace

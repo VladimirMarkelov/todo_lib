@@ -140,6 +140,8 @@ pub struct Conf {
 
     /// Search for a due date: any, no due date, or withing range
     pub due: Option<Due>,
+    /// Search for a threshold date: any, no threshold date, or withing range
+    pub thr: Option<Due>,
     /// Search for a recurrent todos
     pub rec: Option<Recurrence>,
     /// Search for a todos with priority or priority range
@@ -157,6 +159,7 @@ impl Default for Conf {
 
             all: TodoStatus::Active,
             due: None,
+            thr: None,
             rec: None,
             pri: None,
         }
@@ -357,6 +360,49 @@ fn filter_due(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
     }
 }
 
+fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    match &c.thr {
+        None => v,
+        Some(thr) => {
+            let today = chrono::Local::now().date().naive_local();
+            let mut new_v: todo::IDVec = Vec::new();
+            for i in v.iter() {
+                let idx = *i;
+                match thr.span {
+                    ValueSpan::None => {
+                        if tasks[idx].threshold_date.is_none() {
+                            new_v.push(idx);
+                        }
+                    }
+                    ValueSpan::Any => {
+                        if tasks[idx].threshold_date.is_some() {
+                            new_v.push(idx);
+                        }
+                    }
+                    ValueSpan::Lower => {
+                        if let Some(d) = tasks[idx].threshold_date {
+                            let diff = d - today;
+                            if diff.num_days() < thr.days.low {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    ValueSpan::Range => {
+                        if let Some(d) = tasks[idx].threshold_date {
+                            let diff = d - today;
+                            if diff.num_days() >= thr.days.low && diff.num_days() <= thr.days.high {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            new_v
+        }
+    }
+}
+
 fn is_status_ok(task: &todo_txt::task::Extended, status: &TodoStatus) -> bool {
     !((*status == TodoStatus::Active && task.finished) || (*status == TodoStatus::Done && !task.finished))
 }
@@ -407,6 +453,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
     v = filter_priority(tasks, v, c);
     v = filter_recurrence(tasks, v, c);
     v = filter_due(tasks, v, c);
+    v = filter_threshold(tasks, v, c);
 
     v
 }

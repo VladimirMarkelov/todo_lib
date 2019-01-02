@@ -11,6 +11,7 @@ pub struct Conf {
     /// comma separated list of field to sort by. Supported field names:
     /// * `pri` or `prioroty` - sort by priority (without priority are the last ones);
     /// * `due` - sor by due date (todos that do not have due date are at the bottom);
+    /// * `thr` - sor by threshold date (todos that do not have threshold date are at the bottom);
     /// * `completed` or `finished` - sort by completion date (incomplete ones are at the bottom);
     /// * `created` or `create` - sort by creation date;
     /// * `subject`, `subj` or `text` - sort by todo's subjects;
@@ -115,6 +116,7 @@ pub fn sort(ids: &mut todo::IDVec, todos: &todo::TaskSlice, c: &Conf) {
                 res = match *f {
                     "pri" | "priority" => todos[*a].priority.cmp(&todos[*b].priority),
                     "due" => cmp_opt_dates(todos[*a].due_date, todos[*b].due_date),
+                    "thr" => cmp_opt_dates(todos[*a].threshold_date, todos[*b].threshold_date),
                     "completed" | "finished" => cmp_opt_dates(todos[*a].finish_date, todos[*b].finish_date),
                     "created" | "create" => cmp_opt_dates(todos[*a].create_date, todos[*b].create_date),
                     "subject" | "text" | "subj" => todos[*a].subject.cmp(&todos[*b].subject),

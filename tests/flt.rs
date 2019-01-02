@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use todo_lib::{tfilter, todo};
+use todo_lib::{tfilter, todo, tsort};
 use todo_txt;
 
 fn init_tasks() -> todo::TaskVec {
@@ -12,7 +12,7 @@ fn init_tasks() -> todo::TaskVec {
         )
         .unwrap(),
     );
-    t.push(todo_txt::task::Extended::from_str("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01").unwrap());
+    t.push(todo_txt::task::Extended::from_str("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01 t:2019-01-02").unwrap());
     t.push(
         todo_txt::task::Extended::from_str("(A) Kid's art school lesson +Family @Kids due:2018-11-10 rec:1w").unwrap(),
     );
@@ -220,4 +220,68 @@ fn item_recurrence() {
     });
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![0, 1, 2, 4, 5]);
+}
+
+#[test]
+fn item_due() {
+    let t = init_tasks();
+
+    let mut cflt = tfilter::Conf::default();
+    cflt.all = tfilter::TodoStatus::All;
+
+    // with due
+    cflt.due = Some(tfilter::Due {
+        span: tfilter::ValueSpan::Any,
+        days: Default::default(),
+    });
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![2, 3, 4, 5]);
+
+    // without due
+    cflt.due = Some(tfilter::Due {
+        span: tfilter::ValueSpan::None,
+        days: Default::default(),
+    });
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![0, 1]);
+
+    let sconf = tsort::Conf {
+        fields: Some("due".to_string()),
+        rev: true,
+    };
+    let mut ids: todo::IDVec = vec![0, 1, 2, 3, 4, 5];
+    tsort::sort(&mut ids, &t, &sconf);
+    assert_eq!(ids, vec![1, 0, 5, 2, 4, 3]);
+}
+
+#[test]
+fn item_threshold() {
+    let t = init_tasks();
+
+    let mut cflt = tfilter::Conf::default();
+    cflt.all = tfilter::TodoStatus::All;
+
+    // with due
+    cflt.thr = Some(tfilter::Due {
+        span: tfilter::ValueSpan::Any,
+        days: Default::default(),
+    });
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![2]);
+
+    // without due
+    cflt.thr = Some(tfilter::Due {
+        span: tfilter::ValueSpan::None,
+        days: Default::default(),
+    });
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![0, 1, 3, 4, 5]);
+
+    let sconf = tsort::Conf {
+        fields: Some("thr".to_string()),
+        rev: false,
+    };
+    let mut ids: todo::IDVec = vec![0, 1, 2, 3, 4, 5];
+    tsort::sort(&mut ids, &t, &sconf);
+    assert_eq!(ids, vec![2, 0, 1, 3, 4, 5]);
 }

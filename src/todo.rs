@@ -81,6 +81,10 @@ pub struct Conf {
     pub due: Option<chrono::NaiveDate>,
     /// Type of operation applied to old due date
     pub due_act: Action,
+    /// New threshold date
+    pub thr: Option<chrono::NaiveDate>,
+    /// Type of operation applied to old threshold date
+    pub thr_act: Action,
     /// New recurrence
     pub recurrence: Option<todo_txt::task::Recurrence>,
     /// Type of operation applied to old recurrence
@@ -110,6 +114,8 @@ impl Default for Conf {
             priority_act: Action::None,
             due: None,
             due_act: Action::None,
+            thr: None,
+            thr_act: Action::None,
             recurrence: None,
             recurrence_act: Action::None,
             projects: Vec::new(),
@@ -252,7 +258,15 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 
         if c.done {
             if let (Some(rr), Some(dd)) = (&tasks[*idx].recurrence, &tasks[*idx].due_date) {
+                let td = tasks[*idx].threshold_date;
+                let rd = rr.clone();
                 tasks[*idx].due_date = Some(rr.clone() + *dd);
+                bools[i] = true;
+                if let Some(dh) = &td {
+                    tasks[*idx].threshold_date = Some(rd + *dh);
+                }
+            } else if let (Some(rr), Some(dh)) = (&tasks[*idx].recurrence, &tasks[*idx].threshold_date) {
+                tasks[*idx].threshold_date = Some(rr.clone() + *dh);
                 bools[i] = true;
             } else if !tasks[*idx].finished {
                 tasks[*idx].complete();
@@ -405,11 +419,31 @@ fn update_due_date(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
     false
 }
 
+fn update_thr_date(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
+    match c.thr_act {
+        Action::Set => {
+            if tsort::cmp_opt_dates(task.threshold_date, c.thr) != Ordering::Equal {
+                task.threshold_date = c.thr;
+                return true;
+            }
+        }
+        Action::Delete => {
+            if task.threshold_date.is_some() {
+                task.threshold_date = None;
+                return true;
+            }
+        }
+        _ => {}
+    }
+
+    false
+}
+
 fn update_recurrence(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
     match c.recurrence_act {
         Action::Set => {
             if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence) {
-                task.due_date = c.due;
+                task.recurrence = c.recurrence.clone();
                 if let Some(nr) = &c.recurrence {
                     let new_rec = format!("{}", nr);
                     if let Some(subj) = replace_tag(&task.subject, "rec:", &new_rec) {
@@ -587,6 +621,7 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
 
         bools[i] = update_priority(&mut tasks[id], c);
         bools[i] |= update_due_date(&mut tasks[id], c);
+        bools[i] |= update_thr_date(&mut tasks[id], c);
         bools[i] |= update_recurrence(&mut tasks[id], c);
         bools[i] |= update_projects(&mut tasks[id], c);
         bools[i] |= update_contexts(&mut tasks[id], c);
