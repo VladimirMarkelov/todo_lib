@@ -1,4 +1,7 @@
-# TODO Library ![](https://travis-ci.com/VladimirMarkelov/todo_lib.svg?branch=master)
+# TODO Library 
+
+![](https://travis-ci.com/VladimirMarkelov/todo_lib.svg?branch=master)
+[![](https://img.shields.io/crates/v/todo_lib.svg)](https://crates.io/crates/todo_lib)
 
 A collection of utilities to work with files in [todo.txt format](http://todotxt.org/)
 

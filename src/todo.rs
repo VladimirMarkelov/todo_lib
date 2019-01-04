@@ -13,6 +13,7 @@ use std::str::FromStr;
 use crate::terr;
 use crate::tsort;
 use caseless::default_caseless_match_str;
+use chrono;
 use todo_txt;
 
 /// The ID value returned instead of new todo ID if adding a new todo fails
@@ -103,6 +104,9 @@ pub struct Conf {
     pub contexts: Vec<String>,
     /// Type of operation applied to contexts
     pub context_act: Action,
+    /// Automatically set creation date to today if it is not defined in subject
+    /// when adding a new todo
+    pub auto_create_date: bool,
 }
 
 impl Default for Conf {
@@ -122,6 +126,7 @@ impl Default for Conf {
             project_act: Action::None,
             contexts: Vec::new(),
             context_act: Action::None,
+            auto_create_date: false,
         }
     }
 }
@@ -235,7 +240,10 @@ pub fn add(tasks: &mut TaskVec, c: &Conf) -> usize {
     };
 
     match todo_txt::task::Extended::from_str(s) {
-        Ok(t) => {
+        Ok(mut t) => {
+            if c.auto_create_date && t.create_date.is_none() {
+                t.create_date = Some(chrono::Local::now().date().naive_local());
+            }
             tasks.push(t);
             tasks.len() - 1
         }
