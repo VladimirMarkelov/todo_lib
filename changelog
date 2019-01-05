@@ -1,5 +1,7 @@
-2018-01-04
-[+] New option in config: `creation_date_auto`
+2019-01-04 - version 0.2.2
+[+] New option in config: `creation_date_auto` - automatically adds creation
+    date to a new todo if it does not have it in its subject
+[+] New command line argument `--done` to load archived todos
 
 2018-12-29 - version 0.2.0
 [!] First release
