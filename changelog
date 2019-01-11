@@ -1,3 +1,6 @@
+2019-01-04 - version 0.2.3
+[+] New range for ID selection: List = list of IDs
+
 2019-01-04 - version 0.2.2
 [+] New option in config: `creation_date_auto` - automatically adds creation
     date to a new todo if it does not have it in its subject

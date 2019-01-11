@@ -12,7 +12,10 @@ fn init_tasks() -> todo::TaskVec {
         )
         .unwrap(),
     );
-    t.push(todo_txt::task::Extended::from_str("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01 t:2019-01-02").unwrap());
+    t.push(
+        todo_txt::task::Extended::from_str("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01 t:2019-01-02")
+            .unwrap(),
+    );
     t.push(
         todo_txt::task::Extended::from_str("(A) Kid's art school lesson +Family @Kids due:2018-11-10 rec:1w").unwrap(),
     );

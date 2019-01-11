@@ -17,6 +17,8 @@ pub enum ItemRange {
     /// Values can exceed the number of todos. All IDs greater than the number
     /// of todos are skipped
     Range(usize, usize),
+    /// List of IDs
+    List(Vec<usize>),
 }
 
 /// Todo state range
@@ -437,6 +439,16 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
                     v.push(start);
                 }
                 start += 1;
+            }
+        }
+        ItemRange::List(ref lst) => {
+            for idx in lst.iter() {
+                if *idx == 0 || *idx >= tasks.len() {
+                    continue;
+                }
+                if is_status_ok(&tasks[*idx], &c.all) {
+                    v.push(*idx);
+                }
             }
         }
         _ => {
