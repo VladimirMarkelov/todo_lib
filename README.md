@@ -34,7 +34,7 @@ It works similar to `save` but appends task list to a given `filename`. It does 
 
 The function gets the list of all todos and filtering rules and returns the list of todo IDs(todo's ID is the order number of the todo in the original list) that matches the rules. If a rule works with strings(e.g, projects or regex), the rule is case-insensitive. Available rules (if a rule is None the rule is skipped):
 
-* `range` - selects one todo by its ID, or a few ones by ID range(inclusive);
+* `range` - selects one todo by its ID, or a few ones within ID range(inclusive), or a list of IDs;
 * `all` - selects only all done, only incomplete, or both;
 * `pri` - selects with any priority, without any priority, or with the same/higher/lower priority(inclusive);
 * `regex` - when `use_regex` is true, it does regular expression pattern matching, otherwise it search for a substring. Note: it searches for the `regex` in subject, projects, and contexts;
@@ -70,13 +70,13 @@ Because `sort` is the function that should be called after `filter`, it wants a 
 
 The function gets a list of existing todos and a `c` with non-None field `subject`, then it parses `subject` and adds the result todo to the list and return the ID of the new todo. If adding fails - e.g, `subject` is empty or parsing returns an error - the function returns `INVALID_ID`.
 
-### Modifying
+### Modify existing todos
 
 Functions of this category gets a list of all todos, list of todo IDs that should be modified and optionally new values for properties. If list of IDs `ids` is None then the function modifies all todos. It returns the vector of boolean values with the length equal to the length of `ids` (or length of `tasks` if `ids` is None). If the result vector has `true` at some index it means that the todo from `ids` at the same index was modified.
 
 #### Complete and undone todos
 
-#### Mark a todo completed
+##### Mark a todo completed
 
 `done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec`
 
@@ -84,7 +84,7 @@ Makes all todos from `ids` list that are incomplete completed.
 
 Special case: recurrent todos. They are not marked completed, their due date moves to the next date. If you need to mark recurrent todo completed you have to remove recurrence from the todo beforehand.
 
-#### Remove completion mark from a todo
+##### Remove completion mark from a todo
 
 `undone(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec`
 
