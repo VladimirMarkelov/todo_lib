@@ -43,6 +43,7 @@ The function gets the list of all todos and filtering rules and returns the list
 * `due` - selects all todos with any due date, without due date, a todo with due date within range, or todos which are less than the number of days ahead;
 * `rec` - selects all recurrent todos or all without recurrent flag.
 * `thr` - selects all todos with any threshold date, without threshold date
+* `tmr` - selects all active todos - that have their timers running
 
 ## Sorting
 
@@ -107,3 +108,27 @@ What can be modified:
 * `recurrence` - set or remove
 * `projects` - add, remove or replace
 * `contexts` - add, remove or replace
+
+#### Time tracking support
+
+To calculated time spent on a todo, two main funcntions are added:
+
+##### Start and stop time tracking
+
+`start(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec`
+
+Makes todos active if they are incomplete and their is not yet running. All todos saves the timestamp when they were activated.
+
+`stop(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec`
+
+Stop timers for a given todos. Time taken by the todo is updated.
+
+##### And two utility functions:
+
+`is_timer_on(task: &todo_txt::task::Extended) -> bool`
+
+Retunrs `true` if the given todo is active
+
+`spent_time(task: &todo_txt::task::Extended) -> chrono::Duration`
+
+Returns the total time spent on the given todo. For an inactive todo it returns the current value of todo's tag `spent`. For an active todo it returns sum of todo's tag `spent` and the time passed since the moment the todo was activated.

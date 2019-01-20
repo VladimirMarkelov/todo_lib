@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use crate::timer;
 use crate::todo;
 use todo_txt;
 
@@ -121,17 +122,21 @@ pub fn sort(ids: &mut todo::IDVec, todos: &todo::TaskSlice, c: &Conf) {
                     "created" | "create" => cmp_opt_dates(todos[*a].create_date, todos[*b].create_date),
                     "subject" | "text" | "subj" => todos[*a].subject.cmp(&todos[*b].subject),
                     "done" => {
-                        let f1 = if todos[*a].recurrence.is_some() {
+                        let f1 = if timer::is_timer_on(&todos[*a]) {
                             1
-                        } else if todos[*a].finished {
+                        } else if todos[*a].recurrence.is_some() {
                             2
+                        } else if todos[*a].finished {
+                            3
                         } else {
                             0
                         };
-                        let f2 = if todos[*b].recurrence.is_some() {
+                        let f2 = if timer::is_timer_on(&todos[*b]) {
                             1
-                        } else if todos[*b].finished {
+                        } else if todos[*b].recurrence.is_some() {
                             2
+                        } else if todos[*b].finished {
+                            3
                         } else {
                             0
                         };
@@ -139,19 +144,11 @@ pub fn sort(ids: &mut todo::IDVec, todos: &todo::TaskSlice, c: &Conf) {
                     }
                     "proj" | "project" => cmp_opt_arrays(&todos[*a].projects, &todos[*b].projects),
                     "ctx" | "context" => cmp_opt_arrays(&todos[*a].contexts, &todos[*b].contexts),
-                    // "active" => {
-                    //     let a_act = if let Some(state) = todos[*a].tags.get(todo::TIMER_TAG) {
-                    //         state != todo::TIMER_OFF
-                    //     } else {
-                    //         false
-                    //     };
-                    //     let b_act = if let Some(state) = todos[*b].tags.get(todo::TIMER_TAG) {
-                    //         state != todo::TIMER_OFF
-                    //     } else {
-                    //         false
-                    //     };
-                    //     b_act.cmp(&a_act)
-                    // },
+                    "active" => {
+                        let a_act = timer::is_timer_on(&todos[*a]);
+                        let b_act = timer::is_timer_on(&todos[*b]);
+                        b_act.cmp(&a_act)
+                    }
                     _ => Ordering::Equal,
                 };
 

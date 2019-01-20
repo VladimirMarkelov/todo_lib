@@ -16,5 +16,6 @@
 
 pub mod terr;
 pub mod tfilter;
+pub mod timer;
 pub mod todo;
 pub mod tsort;

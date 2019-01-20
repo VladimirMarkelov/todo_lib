@@ -1,3 +1,7 @@
+2019-01-19 - version 0.3.0
+[+] Timer support: start, stop timer for a todo, and related functions
+[*] Marking a todo completed stops todo's timer if it is active
+
 2019-01-04 - version 0.2.3
 [+] New range for ID selection: List = list of IDs
 

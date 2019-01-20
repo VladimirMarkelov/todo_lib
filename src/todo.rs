@@ -11,6 +11,7 @@ use std::path::Path;
 use std::str::FromStr;
 
 use crate::terr;
+use crate::timer;
 use crate::tsort;
 use caseless::default_caseless_match_str;
 use chrono;
@@ -20,8 +21,9 @@ use todo_txt;
 pub const INVALID_ID: usize = 9_999_999_999;
 /// Empty priority - means a todo do not have any priority set
 pub const NO_PRIORITY: u8 = 26u8;
-// pub const TIMER_TAG: &str = "timer";
-// pub const TIMER_OFF: &str = "off";
+pub const TIMER_TAG: &str = "tmr";
+pub const SPENT_TAG: &str = "spent";
+pub const TIMER_OFF: &str = "off";
 
 pub type TaskVec = Vec<todo_txt::task::Extended>;
 pub type TaskSlice = [todo_txt::task::Extended];
@@ -265,6 +267,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
         }
 
         if c.done {
+            bools[i] = timer::stop_timer(&mut tasks[*idx]);
             if let (Some(rr), Some(dd)) = (&tasks[*idx].recurrence, &tasks[*idx].due_date) {
                 let td = tasks[*idx].threshold_date;
                 let rd = rr.clone();
@@ -753,6 +756,50 @@ fn remove_tag(orig: &str, patt: &str) -> (Option<usize>, Option<String>) {
         Some(end) => orig[..start].to_string() + &new_orig[end..],
     };
     (Some(start), Some(new_str))
+}
+
+/// Starts timers of all toods that are not done
+pub fn start(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
+    if tasks.is_empty() {
+        return vec![];
+    }
+
+    let longvec = make_id_vec(tasks.len());
+    let idlist = if let Some(v) = ids { v } else { &longvec };
+
+    let mut bools = vec![false; idlist.len()];
+    for (i, idx) in idlist.iter().enumerate() {
+        let id = *idx;
+        if id >= tasks.len() {
+            continue;
+        }
+
+        bools[i] = timer::start_timer(&mut tasks[id]);
+    }
+
+    bools
+}
+
+/// Stops timers of all toods that are running
+pub fn stop(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
+    if tasks.is_empty() {
+        return vec![];
+    }
+
+    let longvec = make_id_vec(tasks.len());
+    let idlist = if let Some(v) = ids { v } else { &longvec };
+
+    let mut bools = vec![false; idlist.len()];
+    for (i, idx) in idlist.iter().enumerate() {
+        let id = *idx;
+        if id >= tasks.len() {
+            continue;
+        }
+
+        bools[i] = timer::stop_timer(&mut tasks[id]);
+    }
+
+    bools
 }
 
 #[cfg(test)]

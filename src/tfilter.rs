@@ -3,6 +3,7 @@ use regex::Regex;
 use chrono;
 use todo_txt;
 
+use crate::timer;
 use crate::todo;
 
 /// Span of todo record IDs to process. ID is an order number of the todo
@@ -68,6 +69,8 @@ pub enum ValueSpan {
     Any, // any|(+ without priority)
     /// Property value must be within range (range is inclusive)
     Range, // from - to
+    /// Timer is running
+    Active,
 }
 
 /// For filtering by due date. `days` is inclusive range and is not used when
@@ -112,6 +115,21 @@ impl Default for Priority {
     }
 }
 
+/// For filtering by timer
+#[derive(Debug, Clone, PartialEq)]
+pub struct Timer {
+    pub span: ValueSpan,
+    pub value: usize,
+}
+impl Default for Timer {
+    fn default() -> Timer {
+        Timer {
+            value: 0,
+            span: ValueSpan::None,
+        }
+    }
+}
+
 /// A rules for todo list filtering. Setting a field to None or empty vector
 /// means that the corresponding property is not checked.
 /// All text comparisons are case-insensitive.
@@ -144,10 +162,12 @@ pub struct Conf {
     pub due: Option<Due>,
     /// Search for a threshold date: any, no threshold date, or withing range
     pub thr: Option<Due>,
-    /// Search for a recurrent todos
+    /// Search for recurrent todos
     pub rec: Option<Recurrence>,
-    /// Search for a todos with priority or priority range
+    /// Search for todos with priority or priority range
     pub pri: Option<Priority>,
+    /// Search for todos with timer related stuff: active, inactive, any time spent
+    pub tmr: Option<Timer>,
 }
 
 impl Default for Conf {
@@ -164,6 +184,7 @@ impl Default for Conf {
             thr: None,
             rec: None,
             pri: None,
+            tmr: None,
         }
     }
 }
@@ -405,6 +426,32 @@ fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::
     }
 }
 
+fn filter_timer(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    match &c.tmr {
+        None => v,
+        Some(r) => {
+            let mut new_v: todo::IDVec = Vec::new();
+            for i in v.iter() {
+                let idx = *i;
+                match r.span {
+                    ValueSpan::None => {
+                        if !timer::is_timer_on(&tasks[idx]) {
+                            new_v.push(idx);
+                        }
+                    }
+                    ValueSpan::Active => {
+                        if timer::is_timer_on(&tasks[idx]) {
+                            new_v.push(idx);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            new_v
+        }
+    }
+}
+
 fn is_status_ok(task: &todo_txt::task::Extended, status: &TodoStatus) -> bool {
     !((*status == TodoStatus::Active && task.finished) || (*status == TodoStatus::Done && !task.finished))
 }
@@ -466,6 +513,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
     v = filter_recurrence(tasks, v, c);
     v = filter_due(tasks, v, c);
     v = filter_threshold(tasks, v, c);
+    v = filter_timer(tasks, v, c);
 
     v
 }
