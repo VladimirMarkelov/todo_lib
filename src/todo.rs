@@ -621,7 +621,10 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
         }
 
         if let Some(subj) = c.subject.as_ref() {
-            if let Ok(t) = todo_txt::task::Extended::from_str(subj) {
+            if let Ok(mut t) = todo_txt::task::Extended::from_str(subj) {
+                if t.create_date.is_none() && tasks[id].create_date.is_some() {
+                    t.create_date = tasks[id].create_date;
+                }
                 tasks[id] = t;
                 bools[i] = true;
             }
