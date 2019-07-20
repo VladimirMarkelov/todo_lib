@@ -1,3 +1,7 @@
+2019-01-19 - version 0.3.2
+[*] Allow to use '=' when setting sort order: '-s=pri' works the same as
+    '-s pri' and '--sort=pri'
+
 2019-01-19 - version 0.3.0
 [+] Timer support: start, stop timer for a todo, and related functions
 [*] Marking a todo completed stops todo's timer if it is active

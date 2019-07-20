@@ -97,7 +97,7 @@ pub fn sort(ids: &mut todo::IDVec, todos: &todo::TaskSlice, c: &Conf) {
     let fields: Vec<&str> = match &c.fields {
         None => Vec::new(),
         Some(v) => {
-            low = v.to_lowercase();
+            low = v.trim_start_matches(|c: char| c == ' ' || c == '=').to_lowercase();
             low.split(|c: char| c == ',' || c == ':').collect()
         }
     };
