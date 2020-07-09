@@ -25,7 +25,7 @@ pub enum TodoErrorKind {
 }
 
 impl Fail for TodoError {
-    fn cause(&self) -> Option<&Fail> {
+    fn cause(&self) -> Option<&dyn Fail> {
         self.inner.cause()
     }
 
