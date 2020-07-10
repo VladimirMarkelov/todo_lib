@@ -16,5 +16,5 @@ caseless = "0.2.1"
 failure="0.1.3"
 
 [dependencies.todo-txt]
-version = "1"
+version = "2.0"
 features = ["extended"]
