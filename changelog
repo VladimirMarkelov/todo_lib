@@ -1,3 +1,7 @@
+2020-07-23 - version 0.4.0
+[*] When a recurrent todo is done, its new due date is always set in the
+    future. If the todo has a treshold, it is corrected accordingly
+
 2019-01-19 - version 0.3.2
 [*] Allow to use '=' when setting sort order: '-s=pri' works the same as
     '-s pri' and '--sort=pri'

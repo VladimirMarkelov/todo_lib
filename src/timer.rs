@@ -1,7 +1,4 @@
-use chrono;
-
 use crate::todo;
-use todo_txt;
 
 /// Returns true if a given task is active - its timer is running
 pub fn is_timer_on(task: &todo_txt::task::Extended) -> bool {

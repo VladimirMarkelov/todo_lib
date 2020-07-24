@@ -14,8 +14,6 @@ use crate::terr;
 use crate::timer;
 use crate::tsort;
 use caseless::default_caseless_match_str;
-use chrono;
-use todo_txt;
 
 /// The ID value returned instead of new todo ID if adding a new todo fails
 pub const INVALID_ID: usize = 9_999_999_999;
@@ -260,6 +258,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
     let longvec = make_id_vec(tasks.len());
     let id_iter = if let Some(v) = ids { v } else { &longvec };
     let mut bools = vec![false; id_iter.len()];
+    let now = chrono::Local::now().date().naive_local();
 
     for (i, idx) in id_iter.iter().enumerate() {
         if *idx >= tasks.len() {
@@ -270,11 +269,21 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
             bools[i] = timer::stop_timer(&mut tasks[*idx]);
             if let (Some(rr), Some(dd)) = (&tasks[*idx].recurrence, &tasks[*idx].due_date) {
                 let td = tasks[*idx].threshold_date;
+                let mut cnt = 0;
                 let rd = rr.clone();
-                tasks[*idx].due_date = Some(rr.clone() + *dd);
+                let mut new_due = *dd;
+                while cnt == 0 || new_due <= now {
+                    new_due = rr.clone() + new_due;
+                    cnt += 1;
+                }
+                tasks[*idx].due_date = Some(new_due);
                 bools[i] = true;
                 if let Some(dh) = &td {
-                    tasks[*idx].threshold_date = Some(rd + *dh);
+                    let mut new_thr = *dh;
+                    for _i in 0..cnt {
+                        new_thr = rd.clone() + new_thr;
+                    }
+                    tasks[*idx].threshold_date = Some(new_thr);
                 }
             } else if let (Some(rr), Some(dh)) = (&tasks[*idx].recurrence, &tasks[*idx].threshold_date) {
                 tasks[*idx].threshold_date = Some(rr.clone() + *dh);

@@ -1,8 +1,5 @@
 use regex::Regex;
 
-use chrono;
-use todo_txt;
-
 use crate::timer;
 use crate::todo;
 

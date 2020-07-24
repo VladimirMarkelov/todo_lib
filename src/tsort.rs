@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 
 use crate::timer;
 use crate::todo;
-use todo_txt;
 
 /// Sorting rules. First, the list of todos is sorted by the fields defined
 /// in `fields` in order of appearance. Then, if `rev` is `true` the list is
