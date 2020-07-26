@@ -44,6 +44,8 @@ The function gets the list of all todos and filtering rules and returns the list
 * `rec` - selects all recurrent todos or all without recurrent flag.
 * `thr` - selects all todos with any threshold date, without threshold date
 * `tmr` - selects all active todos - that have their timers running
+* `created` - selects all todos with any creation date, without creation date, a todo with creation date within range
+* `finished` - selects all todos with any finish date, without finish date, a todo with finish date within range
 
 ## Sorting
 
@@ -83,7 +85,8 @@ Functions of this category gets a list of all todos, list of todo IDs that shoul
 
 Makes all todos from `ids` list that are incomplete completed.
 
-Special case: recurrent todos. They are not marked completed, their due date moves to the next date. If you need to mark recurrent todo completed you have to remove recurrence from the todo beforehand.
+Special case: recurrent todos. They are not marked completed, their due date moves to the next date in the future.
+If you need to mark recurrent todo completed you have to remove recurrence from the todo beforehand.
 
 ##### Remove completion mark from a todo
 

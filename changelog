@@ -1,3 +1,10 @@
+2020-07-25 - version 0.5.0
+Breaking changes:
+[+] Struct `tfilter::Due` is renamed to `tfilter::DateRange` as now todo_lib
+    supports filtering not only by due date, but by creation and finish dates
+[*] Filter for due date did not support `Greater` condition
+[+] Todos can be filtered by their creation and finish dates
+
 2020-07-23 - version 0.4.0
 [*] When a recurrent todo is done, its new due date is always set in the
     future. If the todo has a treshold, it is corrected accordingly
