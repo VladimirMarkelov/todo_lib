@@ -233,7 +233,7 @@ fn item_due() {
     cflt.all = tfilter::TodoStatus::All;
 
     // with due
-    cflt.due = Some(tfilter::Due {
+    cflt.due = Some(tfilter::DateRange {
         span: tfilter::ValueSpan::Any,
         days: Default::default(),
     });
@@ -241,7 +241,7 @@ fn item_due() {
     assert_eq!(ids, vec![2, 3, 4, 5]);
 
     // without due
-    cflt.due = Some(tfilter::Due {
+    cflt.due = Some(tfilter::DateRange {
         span: tfilter::ValueSpan::None,
         days: Default::default(),
     });
@@ -265,7 +265,7 @@ fn item_threshold() {
     cflt.all = tfilter::TodoStatus::All;
 
     // with due
-    cflt.thr = Some(tfilter::Due {
+    cflt.thr = Some(tfilter::DateRange {
         span: tfilter::ValueSpan::Any,
         days: Default::default(),
     });
@@ -273,7 +273,7 @@ fn item_threshold() {
     assert_eq!(ids, vec![2]);
 
     // without due
-    cflt.thr = Some(tfilter::Due {
+    cflt.thr = Some(tfilter::DateRange {
         span: tfilter::ValueSpan::None,
         days: Default::default(),
     });
