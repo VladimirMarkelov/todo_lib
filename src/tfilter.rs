@@ -70,16 +70,16 @@ pub enum ValueSpan {
     Active,
 }
 
-/// For filtering by due date. `days` is inclusive range and is not used when
-/// `span` is `Any` or `None`
+/// For filtering by date range or value. `days` is inclusive range and
+/// is not used when `span` is `Any` or `None`
 #[derive(Debug, Clone, PartialEq)]
-pub struct Due {
+pub struct DateRange {
     pub days: ValueRange,
     pub span: ValueSpan,
 }
-impl Default for Due {
-    fn default() -> Due {
-        Due {
+impl Default for DateRange {
+    fn default() -> DateRange {
+        DateRange {
             span: ValueSpan::None,
             days: Default::default(),
         }
@@ -156,15 +156,19 @@ pub struct Conf {
     pub all: TodoStatus,
 
     /// Search for a due date: any, no due date, or withing range
-    pub due: Option<Due>,
+    pub due: Option<DateRange>,
     /// Search for a threshold date: any, no threshold date, or withing range
-    pub thr: Option<Due>,
+    pub thr: Option<DateRange>,
     /// Search for recurrent todos
     pub rec: Option<Recurrence>,
     /// Search for todos with priority or priority range
     pub pri: Option<Priority>,
     /// Search for todos with timer related stuff: active, inactive, any time spent
     pub tmr: Option<Timer>,
+    /// Search for a creation date: any, no create date, or withing range
+    pub created: Option<DateRange>,
+    /// Search for a finished date: any, no finish date, or withing range
+    pub finished: Option<DateRange>,
 }
 
 impl Default for Conf {
@@ -182,6 +186,8 @@ impl Default for Conf {
             rec: None,
             pri: None,
             tmr: None,
+            created: None,
+            finished: None,
         }
     }
 }
@@ -388,6 +394,108 @@ fn filter_due(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
     }
 }
 
+fn filter_created(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    match &c.created {
+        None => v,
+        Some(created) => {
+            let today = chrono::Local::now().date().naive_local();
+            let mut new_v: todo::IDVec = Vec::new();
+            for i in v.iter() {
+                let idx = *i;
+                match created.span {
+                    ValueSpan::None => {
+                        if tasks[idx].create_date.is_none() {
+                            new_v.push(idx);
+                        }
+                    }
+                    ValueSpan::Any => {
+                        if tasks[idx].create_date.is_some() {
+                            new_v.push(idx);
+                        }
+                    }
+                    ValueSpan::Higher => {
+                        if let Some(d) = tasks[idx].create_date {
+                            let diff = d - today;
+                            if diff.num_days() > created.days.high {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    ValueSpan::Lower => {
+                        if let Some(d) = tasks[idx].create_date {
+                            let diff = d - today;
+                            if diff.num_days() < created.days.low {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    ValueSpan::Range => {
+                        if let Some(d) = tasks[idx].create_date {
+                            let diff = d - today;
+                            if diff.num_days() >= created.days.low && diff.num_days() <= created.days.high {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            new_v
+        }
+    }
+}
+
+fn filter_finished(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    match &c.finished {
+        None => v,
+        Some(finished) => {
+            let today = chrono::Local::now().date().naive_local();
+            let mut new_v: todo::IDVec = Vec::new();
+            for i in v.iter() {
+                let idx = *i;
+                match finished.span {
+                    ValueSpan::None => {
+                        if tasks[idx].finish_date.is_none() {
+                            new_v.push(idx);
+                        }
+                    }
+                    ValueSpan::Any => {
+                        if tasks[idx].finish_date.is_some() {
+                            new_v.push(idx);
+                        }
+                    }
+                    ValueSpan::Higher => {
+                        if let Some(d) = tasks[idx].finish_date {
+                            let diff = d - today;
+                            if diff.num_days() > finished.days.high {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    ValueSpan::Lower => {
+                        if let Some(d) = tasks[idx].finish_date {
+                            let diff = d - today;
+                            if diff.num_days() < finished.days.low {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    ValueSpan::Range => {
+                        if let Some(d) = tasks[idx].finish_date {
+                            let diff = d - today;
+                            if diff.num_days() >= finished.days.low && diff.num_days() <= finished.days.high {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            new_v
+        }
+    }
+}
+
 fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
     match &c.thr {
         None => v,
@@ -517,6 +625,8 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
     v = filter_priority(tasks, v, c);
     v = filter_recurrence(tasks, v, c);
     v = filter_due(tasks, v, c);
+    v = filter_created(tasks, v, c);
+    v = filter_finished(tasks, v, c);
     v = filter_threshold(tasks, v, c);
     v = filter_timer(tasks, v, c);
 
