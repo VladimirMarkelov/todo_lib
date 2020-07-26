@@ -356,6 +356,14 @@ fn filter_due(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
                             new_v.push(idx);
                         }
                     }
+                    ValueSpan::Higher => {
+                        if let Some(d) = tasks[idx].due_date {
+                            let diff = d - today;
+                            if diff.num_days() > due.days.high {
+                                new_v.push(idx);
+                            }
+                        }
+                    }
                     ValueSpan::Lower => {
                         if let Some(d) = tasks[idx].due_date {
                             let diff = d - today;
