@@ -3,6 +3,10 @@ use regex::Regex;
 use crate::timer;
 use crate::todo;
 
+/// Setting unused end of Lower/Higher ValueRange makes the filter to include
+/// todos that have a given date field undefined
+pub const INCLUDE_NONE: i64 = -9_999_998;
+
 /// Span of todo record IDs to process. ID is an order number of the todo
 /// record in the file starting from 0
 #[derive(Debug, Clone)]
@@ -368,6 +372,8 @@ fn filter_due(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
                             if diff.num_days() > due.days.high {
                                 new_v.push(idx);
                             }
+                        } else if due.days.low == INCLUDE_NONE {
+                            new_v.push(idx);
                         }
                     }
                     ValueSpan::Lower => {
@@ -376,6 +382,8 @@ fn filter_due(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
                             if diff.num_days() < due.days.low {
                                 new_v.push(idx);
                             }
+                        } else if due.days.high == INCLUDE_NONE {
+                            new_v.push(idx);
                         }
                     }
                     ValueSpan::Range => {
@@ -419,6 +427,8 @@ fn filter_created(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
                             if diff.num_days() > created.days.high {
                                 new_v.push(idx);
                             }
+                        } else if created.days.low == INCLUDE_NONE {
+                            new_v.push(idx);
                         }
                     }
                     ValueSpan::Lower => {
@@ -427,6 +437,8 @@ fn filter_created(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
                             if diff.num_days() < created.days.low {
                                 new_v.push(idx);
                             }
+                        } else if created.days.high == INCLUDE_NONE {
+                            new_v.push(idx);
                         }
                     }
                     ValueSpan::Range => {
@@ -470,6 +482,8 @@ fn filter_finished(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
                             if diff.num_days() > finished.days.high {
                                 new_v.push(idx);
                             }
+                        } else if finished.days.low == INCLUDE_NONE {
+                            new_v.push(idx);
                         }
                     }
                     ValueSpan::Lower => {
@@ -478,6 +492,8 @@ fn filter_finished(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
                             if diff.num_days() < finished.days.low {
                                 new_v.push(idx);
                             }
+                        } else if finished.days.high == INCLUDE_NONE {
+                            new_v.push(idx);
                         }
                     }
                     ValueSpan::Range => {
