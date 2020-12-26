@@ -406,50 +406,11 @@ fn filter_created(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
     match &c.created {
         None => v,
         Some(created) => {
-            let today = chrono::Local::now().date().naive_local();
             let mut new_v: todo::IDVec = Vec::new();
             for i in v.iter() {
                 let idx = *i;
-                match created.span {
-                    ValueSpan::None => {
-                        if tasks[idx].create_date.is_none() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Any => {
-                        if tasks[idx].create_date.is_some() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Higher => {
-                        if let Some(d) = tasks[idx].create_date {
-                            let diff = d - today;
-                            if diff.num_days() > created.days.high {
-                                new_v.push(idx);
-                            }
-                        } else if created.days.low == INCLUDE_NONE {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Lower => {
-                        if let Some(d) = tasks[idx].create_date {
-                            let diff = d - today;
-                            if diff.num_days() < created.days.low {
-                                new_v.push(idx);
-                            }
-                        } else if created.days.high == INCLUDE_NONE {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Range => {
-                        if let Some(d) = tasks[idx].create_date {
-                            let diff = d - today;
-                            if diff.num_days() >= created.days.low && diff.num_days() <= created.days.high {
-                                new_v.push(idx);
-                            }
-                        }
-                    }
-                    _ => {}
+                if date_in_range(&tasks[idx].create_date, &created) {
+                    new_v.push(idx);
                 }
             }
             new_v
@@ -461,50 +422,11 @@ fn filter_finished(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
     match &c.finished {
         None => v,
         Some(finished) => {
-            let today = chrono::Local::now().date().naive_local();
             let mut new_v: todo::IDVec = Vec::new();
             for i in v.iter() {
                 let idx = *i;
-                match finished.span {
-                    ValueSpan::None => {
-                        if tasks[idx].finish_date.is_none() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Any => {
-                        if tasks[idx].finish_date.is_some() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Higher => {
-                        if let Some(d) = tasks[idx].finish_date {
-                            let diff = d - today;
-                            if diff.num_days() > finished.days.high {
-                                new_v.push(idx);
-                            }
-                        } else if finished.days.low == INCLUDE_NONE {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Lower => {
-                        if let Some(d) = tasks[idx].finish_date {
-                            let diff = d - today;
-                            if diff.num_days() < finished.days.low {
-                                new_v.push(idx);
-                            }
-                        } else if finished.days.high == INCLUDE_NONE {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Range => {
-                        if let Some(d) = tasks[idx].finish_date {
-                            let diff = d - today;
-                            if diff.num_days() >= finished.days.low && diff.num_days() <= finished.days.high {
-                                new_v.push(idx);
-                            }
-                        }
-                    }
-                    _ => {}
+                if date_in_range(&tasks[idx].finish_date, &finished) {
+                    new_v.push(idx);
                 }
             }
             new_v
@@ -516,42 +438,48 @@ fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::
     match &c.thr {
         None => v,
         Some(thr) => {
-            let today = chrono::Local::now().date().naive_local();
             let mut new_v: todo::IDVec = Vec::new();
             for i in v.iter() {
                 let idx = *i;
-                match thr.span {
-                    ValueSpan::None => {
-                        if tasks[idx].threshold_date.is_none() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Any => {
-                        if tasks[idx].threshold_date.is_some() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Lower => {
-                        if let Some(d) = tasks[idx].threshold_date {
-                            let diff = d - today;
-                            if diff.num_days() < thr.days.low {
-                                new_v.push(idx);
-                            }
-                        }
-                    }
-                    ValueSpan::Range => {
-                        if let Some(d) = tasks[idx].threshold_date {
-                            let diff = d - today;
-                            if diff.num_days() >= thr.days.low && diff.num_days() <= thr.days.high {
-                                new_v.push(idx);
-                            }
-                        }
-                    }
-                    _ => {}
+                if date_in_range(&tasks[idx].threshold_date, &thr) {
+                    new_v.push(idx);
                 }
             }
             new_v
         }
+    }
+}
+
+fn date_in_range(date: &Option<chrono::NaiveDate>, range: &DateRange) -> bool {
+    let today = chrono::Local::now().date().naive_local();
+    match range.span {
+        ValueSpan::None => date.is_none(),
+        ValueSpan::Any => date.is_some(),
+        ValueSpan::Higher => {
+            if let Some(d) = date {
+                let diff = *d - today;
+                diff.num_days() > range.days.high
+            } else {
+                range.days.low == INCLUDE_NONE
+            }
+        }
+        ValueSpan::Lower => {
+            if let Some(d) = date {
+                let diff = *d - today;
+                diff.num_days() < range.days.low
+            } else {
+                range.days.high == INCLUDE_NONE
+            }
+        }
+        ValueSpan::Range => {
+            if let Some(d) = date {
+                let diff = *d - today;
+                diff.num_days() >= range.days.low && diff.num_days() <= range.days.high
+            } else {
+                false
+            }
+        }
+        _ => false,
     }
 }
 
