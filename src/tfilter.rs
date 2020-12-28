@@ -6,6 +6,8 @@ use crate::todo;
 /// Setting unused end of Lower/Higher ValueRange makes the filter to include
 /// todos that have a given date field undefined
 pub const INCLUDE_NONE: i64 = -9_999_998;
+const NONE_TITLE: &str = "none";
+const ANY_TITLE: &str = "any";
 
 /// Span of todo record IDs to process. ID is an order number of the todo
 /// record in the file starting from 0
@@ -143,13 +145,28 @@ pub struct Conf {
     /// * `foo*` - finds all todos with projects that starts with `foo`
     /// * `*foo` - finds all todos with projects that ends with `foo`
     /// * `*foo*` - finds all todos with projects that contains `foo`
+    /// Special values:
+    /// * none - select todos with no contexts
+    /// * any - select todos that have at least one context
     pub projects: Vec<String>,
     /// List of all context tags that a todo must include. The search
     /// supports very limited pattern matching:
     /// * `foo*` - finds all todos with contexts that starts with `foo`
     /// * `*foo` - finds all todos with contexts that ends with `foo`
     /// * `*foo*` - finds all todos with contexts that contains `foo`
+    /// Special values:
+    /// * none - select todos with no contexts
+    /// * any - select todos that have at least one context
     pub contexts: Vec<String>,
+    /// List of all tags that a todo must include. The search
+    /// supports very limited pattern matching:
+    /// * `foo*` - finds all todos with tags that starts with `foo`
+    /// * `*foo` - finds all todos with tags that ends with `foo`
+    /// * `*foo*` - finds all todos with tags that contains `foo`
+    /// Special values:
+    /// * none - select todos with no tags
+    /// * any - select todos that have at least one tag
+    pub tags: Vec<String>,
     /// A text that any of text, project, or context must contain
     pub regex: Option<String>,
     /// If it is `true`, `regex` is treated as regular expression. If `use_regex`
@@ -181,6 +198,7 @@ impl Default for Conf {
             range: ItemRange::None,
             projects: Vec::new(),
             contexts: Vec::new(),
+            tags: Vec::new(),
             regex: None,
             use_regex: false,
 
@@ -236,6 +254,27 @@ fn filter_regex(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
     new_v
 }
 
+fn vec_match(task_list: &[String], filter: &[String]) -> bool {
+    if filter.is_empty() {
+        return true;
+    }
+    for f in filter.iter() {
+        if (f == NONE_TITLE && task_list.is_empty()) || (f == ANY_TITLE && !task_list.is_empty()) {
+            return true;
+        }
+    }
+    for ctx in task_list.iter() {
+        let low = ctx.to_lowercase();
+        for tag in filter.iter() {
+            let ltag = tag.to_lowercase();
+            if str_matches(&low, &ltag) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 fn filter_context(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
     if c.contexts.is_empty() {
         return v;
@@ -244,15 +283,8 @@ fn filter_context(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        'outer: for ctx in tasks[idx].contexts.iter() {
-            let low = ctx.to_lowercase();
-            for tag in c.contexts.iter() {
-                let tag = tag.to_lowercase();
-                if str_matches(&low, &tag) {
-                    new_v.push(idx);
-                    break 'outer;
-                }
-            }
+        if vec_match(&tasks[idx].contexts, &c.contexts) {
+            new_v.push(idx);
         }
     }
     new_v
@@ -266,15 +298,27 @@ fn filter_project(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        'outer: for prj in tasks[idx].projects.iter() {
-            let low = prj.to_lowercase();
-            for tag in c.projects.iter() {
-                let tag = tag.to_lowercase();
-                if str_matches(&low, &tag) {
-                    new_v.push(idx);
-                    break 'outer;
-                }
-            }
+        if vec_match(&tasks[idx].projects, &c.projects) {
+            new_v.push(idx);
+        }
+    }
+    new_v
+}
+
+fn filter_tag(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    if c.tags.is_empty() {
+        return v;
+    }
+
+    let mut new_v: todo::IDVec = Vec::new();
+    for i in v.iter() {
+        let idx = *i;
+        let mut tag_list: Vec<String> = Vec::new();
+        for (k, _v) in tasks[idx].tags.iter() {
+            tag_list.push(k.to_string());
+        }
+        if vec_match(&tag_list, &c.tags) {
+            new_v.push(idx);
         }
     }
     new_v
@@ -564,6 +608,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
         }
     }
     v = filter_regex(tasks, v, c);
+    v = filter_tag(tasks, v, c);
     v = filter_project(tasks, v, c);
     v = filter_context(tasks, v, c);
     v = filter_priority(tasks, v, c);

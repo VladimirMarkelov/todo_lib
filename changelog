@@ -1,3 +1,6 @@
+2020-12-27 - version 1.0.0
+[+] New option to filter by 'tag'
+
 2020-12-25 - version 0.5.2
 [*] Make filter rules for threshold the same as for other date fields
 
