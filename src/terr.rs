@@ -20,6 +20,8 @@ pub enum TodoErrorKind {
     AppendFailed,
     #[fail(display = "failed to write todo list")]
     FileWriteFailed,
+    #[fail(display = "first argument must be a command")]
+    NotCommand,
     #[fail(display = "I/O Error: {}", err)]
     IOError { err: String },
 }
