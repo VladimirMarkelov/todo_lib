@@ -8,23 +8,20 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Write;
 use std::path::Path;
-use std::str::FromStr;
 
 use crate::terr;
 use crate::timer;
+use crate::todotxt;
 use crate::tsort;
-use caseless::default_caseless_match_str;
 
 /// The ID value returned instead of new todo ID if adding a new todo fails
 pub const INVALID_ID: usize = 9_999_999_999;
-/// Empty priority - means a todo do not have any priority set
-pub const NO_PRIORITY: u8 = 26u8;
 pub const TIMER_TAG: &str = "tmr";
 pub const SPENT_TAG: &str = "spent";
 pub const TIMER_OFF: &str = "off";
 
-pub type TaskVec = Vec<todo_txt::task::Extended>;
-pub type TaskSlice = [todo_txt::task::Extended];
+pub type TaskVec = Vec<todotxt::Task>;
+pub type TaskSlice = [todotxt::Task];
 pub type IDVec = Vec<usize>;
 pub type IDSlice = [usize];
 pub type ChangedVec = Vec<bool>;
@@ -87,7 +84,7 @@ pub struct Conf {
     /// Type of operation applied to old threshold date
     pub thr_act: Action,
     /// New recurrence
-    pub recurrence: Option<todo_txt::task::Recurrence>,
+    pub recurrence: Option<todotxt::Recurrence>,
     /// Type of operation applied to old recurrence
     pub recurrence_act: Action,
     /// List of projects.
@@ -114,7 +111,7 @@ impl Default for Conf {
         Conf {
             subject: None,
             done: true,
-            priority: NO_PRIORITY,
+            priority: todotxt::NO_PRIORITY,
             priority_act: Action::None,
             due: None,
             due_act: Action::None,
@@ -148,13 +145,13 @@ pub fn load(filename: &Path) -> Result<TaskVec, terr::TodoError> {
     }
 
     let file = File::open(filename).context(terr::TodoErrorKind::LoadFailed)?;
+    let now = chrono::Local::now().date().naive_local();
 
     let br = BufReader::new(&file);
     for l in br.lines() {
         if let Ok(line) = l {
-            if let Ok(t) = todo_txt::task::Extended::from_str(&line) {
-                tasks.push(t);
-            }
+            let t = todotxt::Task::parse(&line, now);
+            tasks.push(t);
         }
     }
 
@@ -239,16 +236,13 @@ pub fn add(tasks: &mut TaskVec, c: &Conf) -> usize {
         Some(subj) => subj,
     };
 
-    match todo_txt::task::Extended::from_str(s) {
-        Ok(mut t) => {
-            if c.auto_create_date && t.create_date.is_none() {
-                t.create_date = Some(chrono::Local::now().date().naive_local());
-            }
-            tasks.push(t);
-            tasks.len() - 1
-        }
-        Err(_) => INVALID_ID,
+    let now = chrono::Local::now().date().naive_local();
+    let mut t = todotxt::Task::parse(s, now);
+    if c.auto_create_date && t.create_date.is_none() {
+        t.create_date = Some(chrono::Local::now().date().naive_local());
     }
+    tasks.push(t);
+    tasks.len() - 1
 }
 
 fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
@@ -267,34 +261,9 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 
         if c.done {
             bools[i] = timer::stop_timer(&mut tasks[*idx]);
-            if let (Some(rr), Some(dd)) = (&tasks[*idx].recurrence, &tasks[*idx].due_date) {
-                let td = tasks[*idx].threshold_date;
-                let mut cnt = 0;
-                let rd = rr.clone();
-                let mut new_due = *dd;
-                while cnt == 0 || new_due <= now {
-                    new_due = rr.clone() + new_due;
-                    cnt += 1;
-                }
-                tasks[*idx].due_date = Some(new_due);
-                bools[i] = true;
-                if let Some(dh) = &td {
-                    let mut new_thr = *dh;
-                    for _i in 0..cnt {
-                        new_thr = rd.clone() + new_thr;
-                    }
-                    tasks[*idx].threshold_date = Some(new_thr);
-                }
-            } else if let (Some(rr), Some(dh)) = (&tasks[*idx].recurrence, &tasks[*idx].threshold_date) {
-                tasks[*idx].threshold_date = Some(rr.clone() + *dh);
-                bools[i] = true;
-            } else if !tasks[*idx].finished {
-                tasks[*idx].complete();
-                bools[i] = true;
-            }
-        } else if tasks[*idx].finished {
-            tasks[*idx].uncomplete();
-            bools[i] = true;
+            bools[i] = bools[i] || (&mut tasks[*idx]).complete(now);
+        } else {
+            bools[i] = tasks[*idx].uncomplete();
         }
     }
 
@@ -319,10 +288,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
 pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
-    let c = Conf {
-        done: true,
-        ..Default::default()
-    };
+    let c = Conf { done: true, ..Default::default() };
     done_undone(tasks, ids, &c)
 }
 
@@ -337,10 +303,7 @@ pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
 pub fn undone(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
-    let c = Conf {
-        done: false,
-        ..Default::default()
-    };
+    let c = Conf { done: false, ..Default::default() };
     done_undone(tasks, ids, &c)
 }
 
@@ -387,7 +350,7 @@ pub fn remove(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
     bools
 }
 
-fn update_priority(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
+fn update_priority(task: &mut todotxt::Task, c: &Conf) -> bool {
     match c.priority_act {
         Action::Set => {
             if task.priority != c.priority {
@@ -396,19 +359,19 @@ fn update_priority(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
             }
         }
         Action::Delete => {
-            if task.priority != NO_PRIORITY {
-                task.priority = NO_PRIORITY;
+            if task.priority != todotxt::NO_PRIORITY {
+                task.priority = todotxt::NO_PRIORITY;
                 return true;
             }
         }
         Action::Increase => {
-            if task.priority != 0 {
+            if task.priority != 0 && task.priority != todotxt::NO_PRIORITY {
                 task.priority -= 1u8;
                 return true;
             }
         }
         Action::Decrease => {
-            if task.priority != NO_PRIORITY {
+            if task.priority != todotxt::NO_PRIORITY {
                 task.priority += 1u8;
                 return true;
             }
@@ -419,17 +382,20 @@ fn update_priority(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
     false
 }
 
-fn update_due_date(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
+fn update_due_date(task: &mut todotxt::Task, c: &Conf) -> bool {
     match c.due_act {
         Action::Set => {
             if tsort::cmp_opt_dates(task.due_date, c.due) != Ordering::Equal {
-                task.due_date = c.due;
+                match c.due {
+                    None => task.update_tag_with_value(todotxt::DUE_TAG, ""),
+                    Some(dt) => task.update_tag_with_value(todotxt::DUE_TAG, &todotxt::format_date(dt)),
+                };
                 return true;
             }
         }
         Action::Delete => {
             if task.due_date.is_some() {
-                task.due_date = None;
+                task.update_tag_with_value(todotxt::DUE_TAG, "");
                 return true;
             }
         }
@@ -439,17 +405,20 @@ fn update_due_date(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
     false
 }
 
-fn update_thr_date(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
+fn update_thr_date(task: &mut todotxt::Task, c: &Conf) -> bool {
     match c.thr_act {
         Action::Set => {
             if tsort::cmp_opt_dates(task.threshold_date, c.thr) != Ordering::Equal {
-                task.threshold_date = c.thr;
+                match c.thr {
+                    None => task.update_tag_with_value(todotxt::THR_TAG, ""),
+                    Some(dt) => task.update_tag_with_value(todotxt::THR_TAG, &todotxt::format_date(dt)),
+                };
                 return true;
             }
         }
         Action::Delete => {
             if task.threshold_date.is_some() {
-                task.threshold_date = None;
+                task.update_tag_with_value(todotxt::THR_TAG, "");
                 return true;
             }
         }
@@ -459,29 +428,22 @@ fn update_thr_date(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
     false
 }
 
-fn update_recurrence(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
+fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
     match c.recurrence_act {
         Action::Set => {
             if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence) {
-                task.recurrence = c.recurrence.clone();
                 if let Some(nr) = &c.recurrence {
                     let new_rec = format!("{}", nr);
-                    if let Some(subj) = replace_tag(&task.subject, "rec:", &new_rec) {
-                        task.subject = subj;
-                        if task.finished {
-                            task.uncomplete();
-                        }
+                    if task.update_tag(&new_rec) && task.finished {
+                        task.uncomplete();
+                        return true;
                     }
-                    return true;
                 }
             }
         }
         Action::Delete => {
             if task.recurrence.is_some() {
-                task.recurrence = None;
-                if let (Some(_), Some(subj)) = remove_tag(&task.subject, "rec:") {
-                    task.subject = subj;
-                }
+                task.update_tag_with_value(todotxt::REC_TAG, "");
                 return true;
             }
         }
@@ -491,52 +453,27 @@ fn update_recurrence(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
     false
 }
 
-fn item_in_list(list: &[String], val: &str) -> (Option<String>, Option<usize>) {
-    for (idx, ll) in list.iter().enumerate() {
-        if default_caseless_match_str(ll, val) {
-            return (Some(ll.to_string()), Some(idx));
-        }
-    }
-
-    (None, None)
-}
-
-fn update_projects(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
+fn update_projects(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
 
     for new_p in &c.projects {
         match c.project_act {
             Action::Set => {
-                let (s, _) = item_in_list(&task.projects, &new_p);
-                if s.is_none() {
-                    task.subject.push_str(" +");
-                    task.subject.push_str(new_p);
-                    task.projects.push(new_p.to_string());
-                    changed = true;
-                }
+                let old_subj = task.subject.clone();
+                task.replace_project("", new_p);
+                changed = old_subj != task.subject;
             }
             Action::Delete => {
-                if let (Some(prj), Some(pos)) = item_in_list(&task.projects, &new_p) {
-                    let prj = "+".to_string() + &prj;
-                    if let Some(new_subj) = remove_proj_ctx(&task.subject, &prj) {
-                        task.subject = new_subj;
-                        task.projects.remove(pos);
-                        changed = true;
-                    }
-                }
+                let old_subj = task.subject.clone();
+                task.replace_project(new_p, "");
+                changed = old_subj != task.subject;
             }
             Action::Replace => {
                 let pair: Vec<&str> = new_p.split_terminator('+').collect();
                 if pair.len() == 2 && pair[0] != pair[1] && !pair[0].is_empty() && !pair[1].is_empty() {
-                    if let (Some(prj), Some(pos)) = item_in_list(&task.projects, &pair[0]) {
-                        let prj = "+".to_string() + &prj;
-                        let new_prj = "+".to_string() + pair[1];
-                        if let Some(new_subj) = replace_proj_ctx(&task.subject, &prj, &new_prj) {
-                            task.subject = new_subj;
-                            task.projects[pos] = new_prj;
-                            changed = true;
-                        }
-                    }
+                    let old_subj = task.subject.clone();
+                    task.replace_project(pair[0], pair[1]);
+                    changed = old_subj != task.subject;
                 }
             }
             _ => {}
@@ -546,42 +483,27 @@ fn update_projects(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
     changed
 }
 
-fn update_contexts(task: &mut todo_txt::task::Extended, c: &Conf) -> bool {
+fn update_contexts(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
 
     for new_c in &c.contexts {
         match c.context_act {
             Action::Set => {
-                let (s, _) = item_in_list(&task.contexts, &new_c);
-                if s.is_none() {
-                    task.subject.push_str(" @");
-                    task.subject.push_str(new_c);
-                    task.contexts.push(new_c.to_string());
-                    changed = true;
-                }
+                let old_subj = task.subject.clone();
+                task.replace_context("", new_c);
+                changed = old_subj != task.subject;
             }
             Action::Delete => {
-                if let (Some(ctx), Some(pos)) = item_in_list(&task.contexts, &new_c) {
-                    let ctx = "@".to_string() + &ctx;
-                    if let Some(new_subj) = remove_proj_ctx(&task.subject, &ctx) {
-                        task.subject = new_subj;
-                        task.contexts.remove(pos);
-                        changed = true;
-                    }
-                }
+                let old_subj = task.subject.clone();
+                task.replace_context(new_c, "");
+                changed = old_subj != task.subject;
             }
             Action::Replace => {
                 let pair: Vec<&str> = new_c.split_terminator('@').collect();
                 if pair.len() == 2 && pair[0] != pair[1] && !pair[0].is_empty() && !pair[1].is_empty() {
-                    if let (Some(ctx), Some(pos)) = item_in_list(&task.contexts, &pair[0]) {
-                        let ctx = "@".to_string() + &ctx;
-                        let new_ctx = "@".to_string() + pair[1];
-                        if let Some(new_subj) = replace_proj_ctx(&task.subject, &ctx, &new_ctx) {
-                            task.subject = new_subj;
-                            task.contexts[pos] = new_ctx;
-                            changed = true;
-                        }
-                    }
+                    let old_subj = task.subject.clone();
+                    task.replace_context(pair[0], pair[1]);
+                    changed = old_subj != task.subject;
                 }
             }
             _ => {}
@@ -621,6 +543,7 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
 
     let longvec = make_id_vec(tasks.len());
     let idlist = if let Some(v) = ids { v } else { &longvec };
+    let now = chrono::Local::now().date().naive_local();
 
     let mut bools = vec![false; idlist.len()];
     for (i, idx) in idlist.iter().enumerate() {
@@ -630,13 +553,12 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
         }
 
         if let Some(subj) = c.subject.as_ref() {
-            if let Ok(mut t) = todo_txt::task::Extended::from_str(subj) {
-                if t.create_date.is_none() && tasks[id].create_date.is_some() {
-                    t.create_date = tasks[id].create_date;
-                }
-                tasks[id] = t;
-                bools[i] = true;
+            let mut t = todotxt::Task::parse(subj, now);
+            if t.create_date.is_none() && tasks[id].create_date.is_some() {
+                t.create_date = tasks[id].create_date;
             }
+            tasks[id] = t;
+            bools[i] = true;
             // it does not make sense to replace more than 1 todo's subject
             // with the same text. So, replace for the first one and stop
             break;
@@ -651,123 +573,6 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
     }
 
     bools
-}
-
-fn replace_proj_ctx(orig: &str, old: &str, new: &str) -> Option<String> {
-    if old == new {
-        return None;
-    }
-
-    if !old.starts_with('@') && !old.starts_with('+') {
-        return None;
-    }
-
-    let mut new_s = String::new();
-
-    let slices = orig.split_whitespace();
-    let mut changed = false;
-    for s in slices {
-        if default_caseless_match_str(s, old) {
-            changed = true;
-            new_s.push_str(new);
-            new_s.push(' ');
-            continue;
-        }
-
-        new_s.push_str(s);
-        new_s.push(' ');
-    }
-
-    if changed {
-        new_s = new_s.trim_matches(' ').to_string();
-        return Some(new_s);
-    }
-
-    None
-}
-
-fn replace_tag(orig: &str, old: &str, new: &str) -> Option<String> {
-    if old == new {
-        return None;
-    }
-
-    let (opt_pos, opt_s) = remove_tag(orig, old);
-    let p = match opt_pos {
-        None => return None,
-        Some(pos) => pos,
-    };
-    let mut s = match opt_s {
-        None => return None,
-        Some(st) => st,
-    };
-
-    let mut new_s = new.to_string();
-    if p != 0 {
-        new_s = " ".to_string() + &new_s;
-    } else if !s.is_empty() {
-        new_s.push(' ');
-    }
-    s.insert_str(p, &new_s);
-    Some(s)
-}
-
-fn remove_proj_ctx(orig: &str, patt: &str) -> Option<String> {
-    if orig == patt {
-        return None;
-    }
-
-    if !patt.starts_with('@') && !patt.starts_with('+') {
-        return None;
-    }
-
-    // must be full match: project or context
-    let mut new_s = String::new();
-
-    let slices = orig.split_whitespace();
-    let mut changed = false;
-    for s in slices {
-        if default_caseless_match_str(s, patt) {
-            changed = true;
-            continue;
-        }
-
-        new_s.push_str(s);
-        new_s.push(' ');
-    }
-
-    if changed {
-        new_s = new_s.trim_matches(' ').to_string();
-        return Some(new_s);
-    }
-
-    None
-}
-
-fn remove_tag(orig: &str, patt: &str) -> (Option<usize>, Option<String>) {
-    if orig == patt {
-        return (Some(0), Some(String::new()));
-    }
-
-    // partial match: custom tag with value
-    if orig.starts_with(patt) {
-        match orig.find(' ') {
-            None => return (Some(0), Some(String::new())),
-            Some(pos) => return (Some(0), Some(orig[pos + 1..].to_string())),
-        }
-    }
-
-    let patts = " ".to_string() + patt;
-    let start = if let Some(p) = orig.find(&patts) {
-        p
-    } else {
-        return (None, None);
-    };
-    let new_orig = &orig[start + 1..];
-    let new_str = match new_orig.find(' ') {
-        None => orig[..start].to_string(),
-        Some(end) => orig[..start].to_string() + &new_orig[end..],
-    };
-    (Some(start), Some(new_str))
 }
 
 /// Starts timers of all toods that are not done
@@ -812,90 +617,4 @@ pub fn stop(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
     }
 
     bools
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn remove_tags() {
-        let new_str = remove_proj_ctx("", "@tag");
-        assert!(new_str.is_none());
-        let new_str = remove_proj_ctx("str abc", "@tag");
-        assert!(new_str.is_none());
-        let new_str = remove_proj_ctx("str @tag1 abc", "@tag");
-        assert!(new_str.is_none());
-        let new_str = remove_proj_ctx("str abc some@tag example", "@tag");
-        assert!(new_str.is_none());
-        let new_str = remove_proj_ctx("str abc", "rec:");
-        assert!(new_str.is_none());
-        let new_str = remove_proj_ctx("str abc somerec:11 example", "rec:");
-        assert!(new_str.is_none());
-
-        let new_str = remove_proj_ctx("@tag str abc @tag1", "@tag");
-        assert_eq!(new_str, Some("str abc @tag1".to_string()));
-        let new_str = remove_proj_ctx("str @tag abc", "@tag");
-        assert_eq!(new_str, Some("str abc".to_string()));
-        let new_str = remove_proj_ctx("str abc @tag", "@tag");
-        assert_eq!(new_str, Some("str abc".to_string()));
-        let new_str = remove_proj_ctx("efg @@tag str abc @tag", "@tag");
-        assert_eq!(new_str, Some("efg @@tag str abc".to_string()));
-
-        let (pos, new_str) = remove_tag("rec:", "rec:");
-        assert_eq!(new_str, Some("".to_string()));
-        assert_eq!(pos, Some(0));
-        let (pos, new_str) = remove_tag("rec:11", "rec:");
-        assert_eq!(new_str, Some("".to_string()));
-        assert_eq!(pos, Some(0));
-        let (pos, new_str) = remove_tag("str rec:22 abc", "rec:");
-        assert_eq!(new_str, Some("str abc".to_string()));
-        assert_eq!(pos, Some(3));
-        let (pos, new_str) = remove_tag("str abc rec:22", "rec:");
-        assert_eq!(new_str, Some("str abc".to_string()));
-        assert_eq!(pos, Some(7));
-        let (pos, new_str) = remove_tag("rec:44 str abc rec:55", "rec:");
-        assert_eq!(new_str, Some("str abc rec:55".to_string()));
-        assert_eq!(pos, Some(0));
-        let (pos, new_str) = remove_tag("efg rrec:44 str abc rec:55", "rec:");
-        assert_eq!(new_str, Some("efg rrec:44 str abc".to_string()));
-        assert_eq!(pos, Some(19));
-    }
-
-    #[test]
-    fn replace_tags() {
-        let new_str = replace_proj_ctx("", "@tag", "@tg");
-        assert!(new_str.is_none());
-        let new_str = replace_proj_ctx("str abc", "@tag", "@tg");
-        assert!(new_str.is_none());
-        let new_str = replace_proj_ctx("str @tag1 abc", "@tag", "@tg");
-        assert!(new_str.is_none());
-        let new_str = replace_proj_ctx("str some@tag abc", "@tag", "@tg");
-        assert!(new_str.is_none());
-        let new_str = replace_proj_ctx("str abc", "rec:", "rec:12");
-        assert!(new_str.is_none());
-        let new_str = replace_proj_ctx("str somrec:45 abc", "rec:", "rec:12");
-        assert!(new_str.is_none());
-
-        let new_str = replace_proj_ctx("@tag str abc @tag1", "@tag", "@newstr");
-        assert_eq!(new_str, Some("@newstr str abc @tag1".to_string()));
-        let new_str = replace_proj_ctx("str @tag abc", "@tag", "@newstr");
-        assert_eq!(new_str, Some("str @newstr abc".to_string()));
-        let new_str = replace_proj_ctx("str abc @tag", "@tag", "@newstr");
-        assert_eq!(new_str, Some("str abc @newstr".to_string()));
-        let new_str = replace_proj_ctx("efg @@tag str abc @tag", "@tag", "@newstr");
-        assert_eq!(new_str, Some("efg @@tag str abc @newstr".to_string()));
-
-        let new_str = replace_tag("rec:", "rec:", "rec:345");
-        assert_eq!(new_str, Some("rec:345".to_string()));
-        let new_str = replace_tag("rec:11", "rec:", "rec:345");
-        assert_eq!(new_str, Some("rec:345".to_string()));
-        let new_str = replace_tag("str rec:22 abc", "rec:", "rec:345");
-        assert_eq!(new_str, Some("str rec:345 abc".to_string()));
-        let new_str = replace_tag("str abc rec:22", "rec:", "rec:345");
-        assert_eq!(new_str, Some("str abc rec:345".to_string()));
-        let new_str = replace_tag("rec:44 str abc rec:55", "rec:", "rec:345");
-        assert_eq!(new_str, Some("rec:345 str abc rec:55".to_string()));
-        let new_str = replace_tag("efg rrec:44 str abc rec:55", "rec:", "rec:345");
-        assert_eq!(new_str, Some("efg rrec:44 str abc rec:345".to_string()));
-    }
 }

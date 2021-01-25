@@ -1,36 +1,32 @@
-use std::str::FromStr;
-use todo_lib::todo;
-use todo_txt;
+use todo_lib::{todo, todotxt};
 
 fn init_tasks() -> todo::TaskVec {
     let mut t = Vec::new();
+    let now = chrono::Local::now().date().naive_local();
 
-    t.push(todo_txt::task::Extended::from_str("call mother +family @parents").unwrap());
-    t.push(
-        todo_txt::task::Extended::from_str(
-            "x (C) 2018-10-05 2018-10-01 call to car service and schedule repair +car @repair",
-        )
-        .unwrap(),
-    );
-    t.push(todo_txt::task::Extended::from_str("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01").unwrap());
-    t.push(
-        todo_txt::task::Extended::from_str("(A) Kid's art school lesson +Family @Kids due:2018-11-10 rec:1w").unwrap(),
-    );
-    t.push(todo_txt::task::Extended::from_str("take kid to hockey game +Family @kids due:2018-11-18").unwrap());
-    t.push(todo_txt::task::Extended::from_str("xmas vacations +FamilyHoliday due:2018-12-24").unwrap());
+    t.push(todotxt::Task::parse("call mother +family @parents", now));
+    t.push(todotxt::Task::parse(
+        "x (C) 2018-10-05 2018-10-01 call to car service and schedule repair +car @repair",
+        now,
+    ));
+    t.push(todotxt::Task::parse("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01", now));
+    t.push(todotxt::Task::parse("(A) Kid's art school lesson +Family @Kids due:2018-11-10 rec:1w", now));
+    t.push(todotxt::Task::parse("take kid to hockey game +Family @kids due:2018-11-18", now));
+    t.push(todotxt::Task::parse("xmas vacations +FamilyHoliday due:2018-12-24", now));
 
     t
 }
 
 fn init_task_lists() -> todo::TaskVec {
     let mut t = Vec::new();
+    let now = chrono::Local::now().date().naive_local();
 
-    t.push(todo_txt::task::Extended::from_str("call mother +Family @parents").unwrap());
-    t.push(todo_txt::task::Extended::from_str("call @Parents @father +family").unwrap());
-    t.push(todo_txt::task::Extended::from_str("+car from service @car").unwrap());
-    t.push(todo_txt::task::Extended::from_str("@CAR from service +CAR").unwrap());
-    t.push(todo_txt::task::Extended::from_str("my +bday @me rec:2y").unwrap());
-    t.push(todo_txt::task::Extended::from_str("rec:1m my wife +bday @wife +family").unwrap());
+    t.push(todotxt::Task::parse("call mother +Family @parents", now));
+    t.push(todotxt::Task::parse("call @Parents @father +family", now));
+    t.push(todotxt::Task::parse("+car from service @car", now));
+    t.push(todotxt::Task::parse("@CAR from service +CAR", now));
+    t.push(todotxt::Task::parse("my +bday @me rec:2y", now));
+    t.push(todotxt::Task::parse("rec:1m my wife +bday @wife +family", now));
 
     t
 }
@@ -120,12 +116,12 @@ fn recs() {
 
     c.projects = vec!["CAR".to_string()];
     let changed = todo::edit(&mut t, Some(&ids), &c);
-    assert_eq!(changed, vec![false, false, true, true, false, false]);
+    assert_eq!(changed, vec![false, false, false, true, false, false]);
 
     c.project_act = todo::Action::Replace;
     c.projects = vec!["Family+People".to_string()];
     let changed = todo::edit(&mut t, Some(&ids), &c);
-    assert_eq!(changed, vec![true, true, false, false, false, true]);
+    assert_eq!(changed, vec![true, false, false, false, false, false]);
 
     c.recurrence_act = todo::Action::Delete;
     let changed = todo::edit(&mut t, Some(&ids), &c);

@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use crate::timer;
 use crate::todo;
+use crate::todotxt;
 
 /// Sorting rules. First, the list of todos is sorted by the fields defined
 /// in `fields` in order of appearance. Then, if `rev` is `true` the list is
@@ -25,14 +26,11 @@ pub struct Conf {
 
 impl Default for Conf {
     fn default() -> Conf {
-        Conf {
-            fields: None,
-            rev: false,
-        }
+        Conf { fields: None, rev: false }
     }
 }
 
-pub(crate) fn cmp_opt_dates(d1: Option<todo_txt::Date>, d2: Option<todo_txt::Date>) -> Ordering {
+pub(crate) fn cmp_opt_dates(d1: Option<chrono::NaiveDate>, d2: Option<chrono::NaiveDate>) -> Ordering {
     match (&d1, &d2) {
         (None, None) => Ordering::Equal,
         (Some(_), None) => Ordering::Less,
@@ -41,7 +39,7 @@ pub(crate) fn cmp_opt_dates(d1: Option<todo_txt::Date>, d2: Option<todo_txt::Dat
     }
 }
 
-pub(crate) fn equal_opt_rec(r1: &Option<todo_txt::task::Recurrence>, r2: &Option<todo_txt::task::Recurrence>) -> bool {
+pub(crate) fn equal_opt_rec(r1: &Option<todotxt::Recurrence>, r2: &Option<todotxt::Recurrence>) -> bool {
     match (&r1, &r2) {
         (None, None) => true,
         (Some(_), None) | (None, Some(_)) => false,

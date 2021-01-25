@@ -1,3 +1,17 @@
+2021-02-02 - version 2.0.0
+[!] The todotxt low-level library is replaced with a new one
+[*] Names of projects and contexts are case-sensitive now
+[+] Tag order in todo's subject is preserved
+[*] Completing todos with recurrence and threshold date does not change
+    threshold date
+[+] Todo completion now follows strict flag of todo's recurrence. Depending on
+    the flag, the next due date is either calculated from previous due date or
+	from the current date
+[*] Every tag must have a non-empty value. Changing tag's value to an empty
+    string removes the tag.
+[*] if a todo is incomplete and has two dates in the beginning, only the first
+    date is parsed as a creation date. The second date becomes part of a subject
+
 2020-12-27 - version 1.0.0
 [+] New option to filter by 'tag'
 

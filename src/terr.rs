@@ -50,9 +50,7 @@ impl TodoError {
 
 impl From<TodoErrorKind> for TodoError {
     fn from(kind: TodoErrorKind) -> TodoError {
-        TodoError {
-            inner: Context::new(kind),
-        }
+        TodoError { inner: Context::new(kind) }
     }
 }
 

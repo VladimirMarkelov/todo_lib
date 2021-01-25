@@ -1,23 +1,18 @@
-use std::str::FromStr;
-use todo_lib::{todo, tsort};
-use todo_txt;
+use todo_lib::{todo, todotxt, tsort};
 
 fn init_tasks() -> todo::TaskVec {
     let mut t = Vec::new();
+    let now = chrono::Local::now().date().naive_local();
 
-    t.push(todo_txt::task::Extended::from_str("call mother +family @parents").unwrap());
-    t.push(
-        todo_txt::task::Extended::from_str(
-            "x (C) 2018-10-05 2018-10-01 call to car service and schedule repair +car @repair",
-        )
-        .unwrap(),
-    );
-    t.push(todo_txt::task::Extended::from_str("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01").unwrap());
-    t.push(
-        todo_txt::task::Extended::from_str("(A) Kid's art school lesson +Family @Kids due:2018-11-10 rec:1w").unwrap(),
-    );
-    t.push(todo_txt::task::Extended::from_str("take kid to hockey game +Family @kids due:2018-11-18").unwrap());
-    t.push(todo_txt::task::Extended::from_str("xmas vacations +FamilyHoliday due:2018-12-24").unwrap());
+    t.push(todotxt::Task::parse("call mother +family @parents", now));
+    t.push(todotxt::Task::parse(
+        "x (C) 2018-10-05 2018-10-01 call to car service and schedule repair +car @repair",
+        now,
+    ));
+    t.push(todotxt::Task::parse("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01", now));
+    t.push(todotxt::Task::parse("(A) Kid's art school lesson +Family @Kids due:2018-11-10 rec:1w", now));
+    t.push(todotxt::Task::parse("take kid to hockey game +Family @kids due:2018-11-18", now));
+    t.push(todotxt::Task::parse("xmas vacations +FamilyHoliday due:2018-12-24", now));
 
     t
 }

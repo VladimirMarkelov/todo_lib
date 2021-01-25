@@ -2,6 +2,7 @@ use regex::Regex;
 
 use crate::timer;
 use crate::todo;
+use crate::todotxt;
 
 /// Setting unused end of Lower/Higher ValueRange makes the filter to include
 /// todos that have a given date field undefined
@@ -85,10 +86,7 @@ pub struct DateRange {
 }
 impl Default for DateRange {
     fn default() -> DateRange {
-        DateRange {
-            span: ValueSpan::None,
-            days: Default::default(),
-        }
+        DateRange { span: ValueSpan::None, days: Default::default() }
     }
 }
 
@@ -111,10 +109,7 @@ pub struct Priority {
 }
 impl Default for Priority {
     fn default() -> Priority {
-        Priority {
-            value: todo::NO_PRIORITY,
-            span: ValueSpan::None,
-        }
+        Priority { value: todotxt::NO_PRIORITY, span: ValueSpan::None }
     }
 }
 
@@ -126,10 +121,7 @@ pub struct Timer {
 }
 impl Default for Timer {
     fn default() -> Timer {
-        Timer {
-            value: 0,
-            span: ValueSpan::None,
-        }
+        Timer { value: 0, span: ValueSpan::None }
     }
 }
 
@@ -333,7 +325,7 @@ fn filter_priority(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
                 let idx = *i;
                 match p.span {
                     ValueSpan::None => {
-                        if tasks[idx].priority == todo::NO_PRIORITY {
+                        if tasks[idx].priority == todotxt::NO_PRIORITY {
                             new_v.push(idx);
                         }
                     }
@@ -353,7 +345,7 @@ fn filter_priority(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
                         }
                     }
                     ValueSpan::Any => {
-                        if tasks[idx].priority < todo::NO_PRIORITY {
+                        if tasks[idx].priority < todotxt::NO_PRIORITY {
                             new_v.push(idx);
                         }
                     }
@@ -553,7 +545,7 @@ fn filter_timer(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
     }
 }
 
-fn is_status_ok(task: &todo_txt::task::Extended, status: &TodoStatus) -> bool {
+fn is_status_ok(task: &todotxt::Task, status: &TodoStatus) -> bool {
     !((*status == TodoStatus::Active && task.finished) || (*status == TodoStatus::Done && !task.finished))
 }
 
