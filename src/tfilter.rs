@@ -238,7 +238,7 @@ fn filter_regex(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
     for i in v.iter() {
         let idx = *i;
         let low = tasks[idx].subject.to_lowercase();
-        if low.find(&rstr).is_some() {
+        if low.contains(&rstr) {
             new_v.push(idx);
             continue;
         }
@@ -445,7 +445,7 @@ fn filter_created(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
             let mut new_v: todo::IDVec = Vec::new();
             for i in v.iter() {
                 let idx = *i;
-                if date_in_range(&tasks[idx].create_date, &created) {
+                if date_in_range(&tasks[idx].create_date, created) {
                     new_v.push(idx);
                 }
             }
@@ -461,7 +461,7 @@ fn filter_finished(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
             let mut new_v: todo::IDVec = Vec::new();
             for i in v.iter() {
                 let idx = *i;
-                if date_in_range(&tasks[idx].finish_date, &finished) {
+                if date_in_range(&tasks[idx].finish_date, finished) {
                     new_v.push(idx);
                 }
             }
@@ -477,7 +477,7 @@ fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::
             let mut new_v: todo::IDVec = Vec::new();
             for i in v.iter() {
                 let idx = *i;
-                if date_in_range(&tasks[idx].threshold_date, &thr) {
+                if date_in_range(&tasks[idx].threshold_date, thr) {
                     new_v.push(idx);
                 }
             }
@@ -592,7 +592,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
             }
         }
         _ => {
-            for (i, ref item) in tasks.iter().enumerate() {
+            for (i, item) in tasks.iter().enumerate() {
                 if is_status_ok(item, &c.all) {
                     v.push(i);
                 }
@@ -617,7 +617,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
 fn str_matches(orig: &str, patt: &str) -> bool {
     if patt.starts_with('*') && patt.ends_with('*') {
         let p = patt.trim_matches('*');
-        orig.find(p).is_some()
+        orig.contains(p)
     } else if patt.starts_with('*') {
         let p = patt.trim_start_matches('*');
         orig.ends_with(p)

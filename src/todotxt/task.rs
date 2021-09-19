@@ -147,10 +147,10 @@ impl Task {
             projects: utils::extract_projects(s),
             tags: utils::extract_tags(s),
         };
-        let mut s = &s[..];
+        let mut s = s;
         if s.starts_with("x ") {
             task.finished = true;
-            s = &s["x ".len()..].trim();
+            s = s["x ".len()..].trim();
         }
         if s.starts_with('(') {
             let priority = next_word(s);
@@ -161,7 +161,7 @@ impl Task {
                 }
                 Ok(p) => {
                     task.priority = p;
-                    s = &s[priority.len()..].trim();
+                    s = s[priority.len()..].trim();
                 }
             }
         }
@@ -178,7 +178,7 @@ impl Task {
                 }
                 match s.find(' ') {
                     None => return task,
-                    Some(idx) => s = &s[idx + 1..].trim(),
+                    Some(idx) => s = s[idx + 1..].trim(),
                 }
                 if !task.finished {
                     task.subject = s.to_string();

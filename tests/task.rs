@@ -6,7 +6,7 @@ fn parse_tasks_simple() {
     struct Test {
         i: &'static str,
         t: Task,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "just text", t: Task { subject: "just text".to_string(), ..Default::default() } },
         Test { i: "x just text", t: Task { subject: "just text".to_string(), finished: true, ..Default::default() } },
@@ -89,7 +89,7 @@ fn parse_tasks_tags() {
         o: &'static str,
         hk: Vec<&'static str>,
         hv: Vec<&'static str>,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "task rec: due:2d", o: "task rec: due:2020-03-17", hk: vec!["due"], hv: vec!["2020-03-17"] },
         Test {
@@ -146,7 +146,7 @@ fn complete_uncomplete() {
         i: &'static str,
         d: &'static str,
         u: &'static str,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "test", d: "x test", u: "test" },
         Test { i: "2020-01-01 test", d: "x 2020-02-02 2020-01-01 test", u: "2020-01-01 test" },
@@ -179,7 +179,7 @@ fn replace_projects() {
         o: &'static str,
         r: &'static str,
         w: &'static str,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "str abc", o: "str abc", r: "+tag", w: "+tg" },
         Test { i: "str +tag1 abc", o: "str +tag1 abc", r: "+tag", w: "+tg" },
@@ -206,7 +206,7 @@ fn replace_contexts() {
         o: &'static str,
         r: &'static str,
         w: &'static str,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "str abc", o: "str abc", r: "@tag", w: "@tg" },
         Test { i: "str @tag1 abc", o: "str @tag1 abc", r: "@tag", w: "@tg" },
@@ -232,7 +232,7 @@ fn replace_recurrences() {
         i: &'static str,
         o: &'static str,
         w: &'static str,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "str abc", o: "str abc rec:12", w: "12" },
         Test { i: "str somrec:45 abc", o: "str somrec:45 abc rec:12", w: "12" },

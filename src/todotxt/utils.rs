@@ -143,7 +143,7 @@ pub fn extract_contexts(s: &str) -> Vec<String> {
 fn extract_anything(s: &str, start_from: &str) -> Vec<String> {
     let mut items: Vec<String> = Vec::new();
     let mut idx = 0;
-    let mut s_in = &s[..];
+    let mut s_in = s;
     let p_len = start_from.len();
     if p_len == 0 {
         return items;

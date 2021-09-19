@@ -148,11 +148,9 @@ pub fn load(filename: &Path) -> Result<TaskVec, terr::TodoError> {
     let now = chrono::Local::now().date().naive_local();
 
     let br = BufReader::new(&file);
-    for l in br.lines() {
-        if let Ok(line) = l {
-            let t = todotxt::Task::parse(&line, now);
-            tasks.push(t);
-        }
+    for l in br.lines().flatten() {
+        let t = todotxt::Task::parse(&l, now);
+        tasks.push(t);
     }
 
     Ok(tasks)

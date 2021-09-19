@@ -7,7 +7,7 @@ fn priorities() {
         i: &'static str,
         o: u8,
         err: bool,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "", o: 0, err: true },
         Test { i: "(A", o: 0, err: true },
@@ -38,7 +38,7 @@ fn abs_dates() {
         o: NaiveDate,
         err: bool,
         eq: bool,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
         Test { i: "0-1-1", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
@@ -73,7 +73,7 @@ fn rel_dates() {
         i: &'static str,
         m: NaiveDate,
         e: NaiveDate,
-    };
+    }
     let base_mid = NaiveDate::from_ymd(2021, 3, 15);
     let base_end = NaiveDate::from_ymd(2021, 2, 28);
     let data: Vec<Test> = vec![
@@ -96,7 +96,7 @@ fn proj_and_ctx() {
         i: &'static str,
         projs: Vec<&'static str>,
         ctxs: Vec<&'static str>,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "", projs: Vec::new(), ctxs: Vec::new() },
         Test { i: "abcd efhg", projs: Vec::new(), ctxs: Vec::new() },
@@ -135,7 +135,7 @@ fn tags() {
         i: &'static str,
         tag_n: Vec<&'static str>,
         tag_v: Vec<&'static str>,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "", tag_n: Vec::new(), tag_v: Vec::new() },
         Test { i: "abcd 0123", tag_n: Vec::new(), tag_v: Vec::new() },
@@ -176,7 +176,7 @@ fn recurrents() {
         i: &'static str,
         r: Recurrence,
         e: bool,
-    };
+    }
     let data: Vec<Test> = vec![
         Test { i: "djd", r: Recurrence::default(), e: true },
         Test { i: "rec:ad", r: Recurrence::default(), e: true },
