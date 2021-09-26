@@ -1,3 +1,6 @@
+2021-09-25 - version 2.1.0
+[+] Threshold in filter is range [..today] by default. It makes all tasks with
+    threshold after today hidden.
 2021-02-02 - version 2.0.0
 [!] The todotxt low-level library is replaced with a new one
 [*] Names of projects and contexts are case-sensitive now

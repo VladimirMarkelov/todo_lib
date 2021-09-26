@@ -471,19 +471,26 @@ fn filter_finished(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
 }
 
 fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
-    match &c.thr {
-        None => v,
-        Some(thr) => {
-            let mut new_v: todo::IDVec = Vec::new();
-            for i in v.iter() {
-                let idx = *i;
-                if date_in_range(&tasks[idx].threshold_date, thr) {
-                    new_v.push(idx);
-                }
-            }
-            new_v
+    let flt = if let Some(thr) = &c.thr {
+        thr.clone()
+    } else {
+        DateRange{
+            days: ValueRange{low: INCLUDE_NONE, high: 0, },
+            span: ValueSpan::Range,
+        }
+    };
+    let mut new_v: todo::IDVec = Vec::new();
+    for i in v.iter() {
+        let idx = *i;
+        if tasks[idx].threshold_date.is_none() {
+            new_v.push(idx);
+            continue;
+        }
+        if date_in_range(&tasks[idx].threshold_date, &flt) {
+            new_v.push(idx);
         }
     }
+    new_v
 }
 
 fn date_in_range(date: &Option<chrono::NaiveDate>, range: &DateRange) -> bool {
