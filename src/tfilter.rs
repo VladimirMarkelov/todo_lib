@@ -479,10 +479,6 @@ fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        if tasks[idx].threshold_date.is_none() {
-            new_v.push(idx);
-            continue;
-        }
         if date_in_range(&tasks[idx].threshold_date, &flt) {
             new_v.push(idx);
         }
@@ -516,7 +512,7 @@ fn date_in_range(date: &Option<chrono::NaiveDate>, range: &DateRange) -> bool {
                 let diff = *d - today;
                 diff.num_days() >= range.days.low && diff.num_days() <= range.days.high
             } else {
-                false
+                range.days.low == INCLUDE_NONE || range.days.high == INCLUDE_NONE
             }
         }
         _ => false,

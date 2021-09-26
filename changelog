@@ -1,3 +1,5 @@
+2021-09-25 - version 2.1.1
+[*] Ranges with "none" are inclusive now - as it was stated in docs.
 2021-09-25 - version 2.1.0
 [+] Threshold in filter is range [..today] by default. It makes all tasks with
     threshold after today hidden.

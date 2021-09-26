@@ -229,12 +229,12 @@ fn item_threshold() {
     let mut cflt = tfilter::Conf::default();
     cflt.all = tfilter::TodoStatus::All;
 
-    // with due
+    // with thr
     cflt.thr = Some(tfilter::DateRange { span: tfilter::ValueSpan::Any, days: Default::default() });
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![2]);
 
-    // without due
+    // without thr
     cflt.thr = Some(tfilter::DateRange { span: tfilter::ValueSpan::None, days: Default::default() });
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![0, 1, 3, 4, 5]);
