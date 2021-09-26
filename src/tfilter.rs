@@ -474,10 +474,7 @@ fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::
     let flt = if let Some(thr) = &c.thr {
         thr.clone()
     } else {
-        DateRange{
-            days: ValueRange{low: INCLUDE_NONE, high: 0, },
-            span: ValueSpan::Range,
-        }
+        DateRange { days: ValueRange { low: INCLUDE_NONE, high: 0 }, span: ValueSpan::Range }
     };
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
