@@ -109,31 +109,31 @@ fn item_projects() {
     let mut cflt = tfilter::Conf::default();
 
     // active with 'car' project
-    cflt.projects.push("car".to_owned());
+    cflt.include.projects.push("car".to_owned());
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![2]);
-    cflt.projects.clear();
+    cflt.include.projects.clear();
 
     // active with 'family' project
-    cflt.projects.push("FAMILY".to_owned());
+    cflt.include.projects.push("FAMILY".to_owned());
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![0, 3, 4]);
-    cflt.projects.clear();
+    cflt.include.projects.clear();
 
     // active with 'family' project
-    cflt.projects.push("FAMILY*".to_owned());
+    cflt.include.projects.push("FAMILY*".to_owned());
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![0, 3, 4, 5]);
-    cflt.projects.clear();
+    cflt.include.projects.clear();
 
     // active with 'holiday' project
-    cflt.projects.push("*holiday".to_owned());
+    cflt.include.projects.push("*holiday".to_owned());
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![5]);
-    cflt.projects.clear();
+    cflt.include.projects.clear();
 
     // active with 'family' related projects
-    cflt.projects.push("*family*".to_owned());
+    cflt.include.projects.push("*family*".to_owned());
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![0, 3, 4, 5]);
 }
@@ -144,10 +144,10 @@ fn item_contexts() {
     let mut cflt = tfilter::Conf::default();
 
     // active with 'kids' context
-    cflt.contexts.push("kids".to_owned());
+    cflt.include.contexts.push("kids".to_owned());
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![3, 4]);
-    cflt.contexts.clear();
+    cflt.include.contexts.clear();
 }
 
 #[test]

@@ -125,14 +125,10 @@ impl Default for Timer {
     }
 }
 
-/// A rules for todo list filtering. Setting a field to None or empty vector
-/// means that the corresponding property is not checked.
-/// All text comparisons are case-insensitive.
+/// Filter rules for special entities: projects, contexts, tags.
 #[derive(Debug, Clone)]
-pub struct Conf {
-    /// Range of todo IDs
-    pub range: ItemRange,
-    /// List of all project tags that a todo must include. The search
+pub struct TagFilter {
+    /// List of all project that a todo must include. The search
     /// supports very limited pattern matching:
     /// * `foo*` - finds all todos with projects that starts with `foo`
     /// * `*foo` - finds all todos with projects that ends with `foo`
@@ -141,7 +137,7 @@ pub struct Conf {
     /// * none - select todos with no contexts
     /// * any - select todos that have at least one context
     pub projects: Vec<String>,
-    /// List of all context tags that a todo must include. The search
+    /// List of all context that a todo must include. The search
     /// supports very limited pattern matching:
     /// * `foo*` - finds all todos with contexts that starts with `foo`
     /// * `*foo` - finds all todos with contexts that ends with `foo`
@@ -159,11 +155,25 @@ pub struct Conf {
     /// * none - select todos with no tags
     /// * any - select todos that have at least one tag
     pub tags: Vec<String>,
+}
+
+/// A rules for todo list filtering. Setting a field to None or empty vector
+/// means that the corresponding property is not checked.
+/// All text comparisons are case-insensitive.
+#[derive(Debug, Clone)]
+pub struct Conf {
+    /// Range of todo IDs
+    pub range: ItemRange,
     /// A text that any of text, project, or context must contain
     pub regex: Option<String>,
     /// If it is `true`, `regex` is treated as regular expression. If `use_regex`
     /// is `false`, the value of `regex` is just a substring to search for
     pub use_regex: bool,
+
+    /// Todos must contain the following values to be included in the list.
+    pub include: TagFilter,
+    // Todos that include the following values are excluded from the list.
+    pub exclude: TagFilter,
 
     /// All incomplete, completed, or both types of todos
     pub all: TodoStatus,
@@ -188,9 +198,8 @@ impl Default for Conf {
     fn default() -> Conf {
         Conf {
             range: ItemRange::None,
-            projects: Vec::new(),
-            contexts: Vec::new(),
-            tags: Vec::new(),
+            include: TagFilter { projects: Vec::new(), contexts: Vec::new(), tags: Vec::new() },
+            exclude: TagFilter { projects: Vec::new(), contexts: Vec::new(), tags: Vec::new() },
             regex: None,
             use_regex: false,
 
@@ -268,14 +277,14 @@ fn vec_match(task_list: &[String], filter: &[String]) -> bool {
 }
 
 fn filter_context(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
-    if c.contexts.is_empty() {
+    if c.include.contexts.is_empty() {
         return v;
     }
 
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        if vec_match(&tasks[idx].contexts, &c.contexts) {
+        if vec_match(&tasks[idx].contexts, &c.include.contexts) {
             new_v.push(idx);
         }
     }
@@ -283,14 +292,14 @@ fn filter_context(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
 }
 
 fn filter_project(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
-    if c.projects.is_empty() {
+    if c.include.projects.is_empty() {
         return v;
     }
 
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        if vec_match(&tasks[idx].projects, &c.projects) {
+        if vec_match(&tasks[idx].projects, &c.include.projects) {
             new_v.push(idx);
         }
     }
@@ -298,7 +307,7 @@ fn filter_project(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
 }
 
 fn filter_tag(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
-    if c.tags.is_empty() {
+    if c.include.tags.is_empty() {
         return v;
     }
 
@@ -309,7 +318,7 @@ fn filter_tag(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
         for (k, _v) in tasks[idx].tags.iter() {
             tag_list.push(k.to_string());
         }
-        if vec_match(&tag_list, &c.tags) {
+        if vec_match(&tag_list, &c.include.tags) {
             new_v.push(idx);
         }
     }
