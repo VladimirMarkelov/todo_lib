@@ -277,14 +277,17 @@ fn vec_match(task_list: &[String], filter: &[String]) -> bool {
 }
 
 fn filter_context(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
-    if c.include.contexts.is_empty() {
+    if c.include.contexts.is_empty() && c.exclude.contexts.is_empty() {
         return v;
     }
 
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        if vec_match(&tasks[idx].contexts, &c.include.contexts) {
+        if !c.exclude.contexts.is_empty() && vec_match(&tasks[idx].contexts, &c.exclude.contexts) {
+            continue;
+        }
+        if c.include.contexts.is_empty() || vec_match(&tasks[idx].contexts, &c.include.contexts) {
             new_v.push(idx);
         }
     }
@@ -292,14 +295,17 @@ fn filter_context(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
 }
 
 fn filter_project(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
-    if c.include.projects.is_empty() {
+    if c.include.projects.is_empty() && c.exclude.projects.is_empty() {
         return v;
     }
 
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        if vec_match(&tasks[idx].projects, &c.include.projects) {
+        if !c.exclude.projects.is_empty() && vec_match(&tasks[idx].projects, &c.exclude.projects) {
+            continue;
+        }
+        if c.include.projects.is_empty() || vec_match(&tasks[idx].projects, &c.include.projects) {
             new_v.push(idx);
         }
     }
@@ -307,7 +313,7 @@ fn filter_project(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::ID
 }
 
 fn filter_tag(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
-    if c.include.tags.is_empty() {
+    if c.include.tags.is_empty() && c.exclude.tags.is_empty() {
         return v;
     }
 
@@ -318,7 +324,10 @@ fn filter_tag(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
         for (k, _v) in tasks[idx].tags.iter() {
             tag_list.push(k.to_string());
         }
-        if vec_match(&tag_list, &c.include.tags) {
+        if !c.exclude.tags.is_empty() && vec_match(&tag_list, &c.exclude.tags) {
+            continue;
+        }
+        if c.include.tags.is_empty() || vec_match(&tag_list, &c.include.tags) {
             new_v.push(idx);
         }
     }

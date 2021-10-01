@@ -136,6 +136,24 @@ fn item_projects() {
     cflt.include.projects.push("*family*".to_owned());
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![0, 3, 4, 5]);
+    cflt.include.projects.clear();
+
+    // Exclude filtering
+    cflt.exclude.projects.push("*family*".to_owned());
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![2]);
+    cflt.exclude.projects.clear();
+
+    cflt.exclude.projects.push("FAMILY".to_owned());
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![2, 5]);
+    cflt.exclude.projects.clear();
+
+    // Exclude has higher priority
+    cflt.include.projects.push("*family*".to_owned());
+    cflt.exclude.projects.push("FAMILY".to_owned());
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![5]);
 }
 
 #[test]
@@ -148,6 +166,10 @@ fn item_contexts() {
     let ids = tfilter::filter(&t, &cflt);
     assert_eq!(ids, vec![3, 4]);
     cflt.include.contexts.clear();
+
+    cflt.exclude.contexts.push("kids".to_owned());
+    let ids = tfilter::filter(&t, &cflt);
+    assert_eq!(ids, vec![0, 2, 5]);
 }
 
 #[test]
