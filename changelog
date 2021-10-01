@@ -1,3 +1,7 @@
+2021-09-30 - version 3.0.0
+[+] Implement exclude filter for projects, contexts, and tags
+    Breaking change: filter struct changed
+
 2021-09-25 - version 2.1.1
 [*] Ranges with "none" are inclusive now - as it was stated in docs.
 2021-09-25 - version 2.1.0
