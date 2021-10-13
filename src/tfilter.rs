@@ -405,50 +405,11 @@ fn filter_due(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
     match &c.due {
         None => v,
         Some(due) => {
-            let today = chrono::Local::now().date().naive_local();
             let mut new_v: todo::IDVec = Vec::new();
             for i in v.iter() {
                 let idx = *i;
-                match due.span {
-                    ValueSpan::None => {
-                        if tasks[idx].due_date.is_none() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Any => {
-                        if tasks[idx].due_date.is_some() {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Higher => {
-                        if let Some(d) = tasks[idx].due_date {
-                            let diff = d - today;
-                            if diff.num_days() > due.days.high {
-                                new_v.push(idx);
-                            }
-                        } else if due.days.low == INCLUDE_NONE {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Lower => {
-                        if let Some(d) = tasks[idx].due_date {
-                            let diff = d - today;
-                            if diff.num_days() < due.days.low {
-                                new_v.push(idx);
-                            }
-                        } else if due.days.high == INCLUDE_NONE {
-                            new_v.push(idx);
-                        }
-                    }
-                    ValueSpan::Range => {
-                        if let Some(d) = tasks[idx].due_date {
-                            let diff = d - today;
-                            if diff.num_days() >= due.days.low && diff.num_days() <= due.days.high {
-                                new_v.push(idx);
-                            }
-                        }
-                    }
-                    _ => {}
+                if date_in_range(&tasks[idx].due_date, due) {
+                    new_v.push(idx);
                 }
             }
             new_v
