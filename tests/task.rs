@@ -150,25 +150,51 @@ fn complete_uncomplete() {
     let data: Vec<Test> = vec![
         Test { i: "test", d: "x test", u: "test" },
         Test { i: "2020-01-01 test", d: "x 2020-02-02 2020-01-01 test", u: "2020-01-01 test" },
-        Test { i: "test rec:+1m due:2020-03-01", d: "test rec:+1m due:2020-04-01", u: "test rec:+1m due:2020-04-01" },
-        Test { i: "test rec:1m due:2020-03-01", d: "test rec:1m due:2020-03-02", u: "test rec:1m due:2020-03-02" },
+        Test { i: "test rec:+1m due:2020-03-01", d: "x test rec:+1m due:2020-03-01", u: "test rec:+1m due:2020-03-01" },
+        Test { i: "test rec:1m due:2020-03-01", d: "x test rec:1m due:2020-03-01", u: "test rec:1m due:2020-03-01" },
         Test { i: "2020-01-01 test rec:7d", d: "x 2020-02-02 2020-01-01 test rec:7d", u: "2020-01-01 test rec:7d" },
     ];
     let base = NaiveDate::from_ymd(2020, 2, 2);
     for d in data.iter() {
         let mut t = Task::parse(d.i, base);
-        let orig_due = t.due_date.clone();
         t.complete(base);
         assert_eq!(d.d, &format!("{}", t), "done {}", d.i);
         if t.create_date.is_some() && t.recurrence.is_none() {
             assert_eq!(t.finish_date, Some(base));
         }
+        t.uncomplete();
+        assert_eq!(d.u, &format!("{}", t), "undone {}", d.i);
+    }
+}
+
+#[test]
+fn next_date() {
+    struct Test {
+        i: &'static str,
+        d: &'static str,
+    }
+    let data: Vec<Test> = vec![
+        Test { i: "2020-01-01 test", d: "2020-01-01 test" },
+        Test { i: "test t:2020-03-02 rec:+1m due:2020-03-01", d: "test t:2020-04-02 rec:+1m due:2020-04-01" },
+        Test { i: "test t:2020-02-29 rec:1m due:2020-03-01", d: "test t:2020-03-01 rec:1m due:2020-03-02" },
+        Test { i: "2020-01-01 test rec:7d", d: "2020-01-01 test rec:7d" },
+        Test { i: "2020-01-01 test due:2020-01-01", d: "2020-01-01 test due:2020-01-01" },
+    ];
+    let base = NaiveDate::from_ymd(2020, 2, 2);
+    for d in data.iter() {
+        let mut t = Task::parse(d.i, base);
+        let orig_due = t.due_date.clone();
+        let orig_thr = t.threshold_date.clone();
+        t.next_dates(base);
+        assert_eq!(d.d, &format!("{}", t), "done {}", d.i);
         if orig_due.is_some() && t.recurrence.is_some() && t.due_date.is_some() {
             let orig = orig_due.unwrap();
             assert!(orig < t.due_date.unwrap(), "due must change: {}", d.i);
         }
-        t.uncomplete();
-        assert_eq!(d.u, &format!("{}", t), "undone {}", d.i);
+        if orig_thr.is_some() && t.recurrence.is_some() && t.threshold_date.is_some() {
+            let orig = orig_thr.unwrap();
+            assert!(orig < t.threshold_date.unwrap(), "threshold must change: {}", d.i);
+        }
     }
 }
 

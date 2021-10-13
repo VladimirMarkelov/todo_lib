@@ -259,7 +259,16 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 
         if c.done {
             bools[i] = timer::stop_timer(&mut tasks[*idx]);
-            bools[i] = bools[i] || (&mut tasks[*idx]).complete(now);
+            let mut next_task = (tasks[*idx]).clone();
+            let completed = (&mut tasks[*idx]).complete(now);
+            if completed
+                && next_task.recurrence.is_some()
+                && (next_task.due_date.is_some() || next_task.threshold_date.is_some())
+            {
+                next_task.next_dates(now);
+                tasks.push(next_task);
+            }
+            bools[i] = bools[i] || completed;
         } else {
             bools[i] = tasks[*idx].uncomplete();
         }
@@ -273,9 +282,9 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 /// It works differently for regular and recurrent ones.
 /// If a todo is a regular one and is not done yet, the function sets flag
 /// `done` and marks the todo as modified.
-/// If a todo is a recurrent one, the function pushes its due date to the next
-/// date (current due increased by recurrence value). Flag `done` is not set
-/// but the todo is marked modified.
+/// If a todo is a recurrent one and any of due and threshold dates exist,
+/// the function marks the current task done and appends a new task with
+/// changed due and threshold dates (current values increased by recurrence value).
 ///
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be completed. If it is `None`

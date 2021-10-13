@@ -289,17 +289,40 @@ impl Task {
         }
     }
 
-    /// Mark the task completed. If the task has both recurrence and due date, the task is not
-    /// marked "done", its due date changes instead. In this case, the new due date depends on
-    /// recurrence strictness: for strict recurrence, the new due date is always due+recurrence;
-    /// for regular recurrence, the new due date is current date + recurrence.
-    /// If the task has only recurrence, the task is only marked completed.
+    /// Mark the task completed.
     /// Returns true if the task was changed(e.g., for a completed task the function return false).
     pub fn complete(&mut self, date: NaiveDate) -> bool {
         if self.finished {
             return false;
         }
-        if let (Some(rec), Some(due)) = (self.recurrence, self.due_date) {
+        self.finished = true;
+        if self.create_date.is_some() {
+            self.finish_date = Some(date);
+        }
+        true
+    }
+
+    /// If the task has both recurrence and due or threshold date, the recurrence and due dates
+    /// change so they point to some day in the future. The new values depends on
+    /// recurrence strictness: for strict recurrence, the new date is always due+recurrence;
+    /// for regular recurrence, the new due date is current date + recurrence.
+    /// If the task has only recurrence, the task is not changed. The function does nothing if the
+    /// task is already completed.
+    /// Returns true if the task was changed(e.g., for a completed task the function return false).
+    pub fn next_dates(&mut self, date: NaiveDate) -> bool {
+        if self.finished {
+            return false;
+        }
+        let rec = match self.recurrence {
+            None => return false,
+            Some(r) => r,
+        };
+        if self.recurrence.is_none() || (self.due_date.is_none() && self.threshold_date.is_none()) {
+            return false;
+        }
+        let mut diff = chrono::Duration::days(0);
+        let mut next_thr = chrono::NaiveDate::from_ymd(2020, 1, 1);
+        if let Some(due) = self.due_date {
             let old = format!("due:{}", utils::format_date(due));
             let mut new_due = if rec.strict { rec.next_date(due) } else { rec.next_date(date) };
             while new_due < date {
@@ -308,11 +331,25 @@ impl Task {
             let new = format!("due:{}", utils::format_date(new_due));
             self.due_date = Some(new_due);
             self.replace_tag(&old, &new);
-        } else {
-            self.finished = true;
-            if self.create_date.is_some() {
-                self.finish_date = Some(date);
+            if let Some(thr) = self.threshold_date {
+                diff = due - thr;
+                next_thr = new_due - (due - thr);
             }
+        }
+        if let Some(thr) = self.threshold_date {
+            let new_thr = if diff.num_days() != 0 {
+                next_thr
+            } else {
+                let mut nthr = if rec.strict { rec.next_date(thr) } else { rec.next_date(date) };
+                while nthr < date {
+                    nthr = rec.next_date(nthr);
+                }
+                nthr
+            };
+            let old = format!("t:{}", utils::format_date(thr));
+            let new = format!("t:{}", utils::format_date(new_thr));
+            self.threshold_date = Some(new_thr);
+            self.replace_tag(&old, &new);
         }
         true
     }
