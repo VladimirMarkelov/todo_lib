@@ -1,3 +1,7 @@
+2021-10-13 - version 3.0.1
+[*] Fix regression: filter "due=none..4d" did not show tasks with empty due
+    dates
+
 2021-09-30 - version 3.0.0
 [+] Implement exclude filter for projects, contexts, and tags
     Breaking change: filter struct changed
