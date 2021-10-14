@@ -562,7 +562,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
         }
         ItemRange::List(ref lst) => {
             for idx in lst.iter() {
-                if *idx == 0 || *idx >= tasks.len() {
+                if *idx >= tasks.len() {
                     continue;
                 }
                 if is_status_ok(&tasks[*idx], &c.all) {

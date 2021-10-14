@@ -1,3 +1,6 @@
+2021-10-14 - version 3.0.2
+[*] When passing list of task IDs, the first task was always ignored
+
 2021-10-13 - version 3.0.1
 [*] Fix regression: filter "due=none..4d" did not show tasks with empty due
     dates
