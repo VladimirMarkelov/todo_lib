@@ -1,10 +1,17 @@
+2021-10-17 - version 4.0.0
+[+] Threshold date also move forward like due dates when a todo is done
+[*] Instead of modifying an existing todo with recurrence, "done" marks the
+    current todo completed and creates a new unfinished one with changed
+	due and threshold dates.
+	If a todo contains only recurrence but no due and threshold dates, the
+	todo is marked comleted and no new todo is created.
+
 2021-10-14 - version 3.0.2
 [*] When passing list of task IDs, the first task was always ignored
 
 2021-10-13 - version 3.0.1
 [*] Fix regression: filter "due=none..4d" did not show tasks with empty due
     dates
-
 2021-09-30 - version 3.0.0
 [+] Implement exclude filter for projects, contexts, and tags
     Breaking change: filter struct changed

@@ -91,8 +91,8 @@ Functions of this category gets a list of all todos, list of todo IDs that shoul
 
 Makes all todos from `ids` list that are incomplete completed.
 
-Special case: recurrent todos. They are not marked completed, their due date moves to the next date in the future.
-If you need to mark recurrent todo completed you have to remove recurrence from the todo beforehand.
+Special case: recurrent todos which contain due date and/or threshold date.
+They are marked completed, and a new todos are created with their due and threshold dates moved to the next date in the future.
 
 ##### Remove completion mark from a todo
 
@@ -113,7 +113,7 @@ What can be modified:
 * `subject` - set a new one
 * `priority` - set, remove, increase or decrease priority
 * `due date` - set or remove
-* `thresold date` - set or remove
+ `thresold date` - set or remove
 * `recurrence` - set or remove
 * `projects` - add, remove or replace
 * `contexts` - add, remove or replace

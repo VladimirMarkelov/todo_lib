@@ -176,7 +176,7 @@ fn next_date() {
     let data: Vec<Test> = vec![
         Test { i: "2020-01-01 test", d: "2020-01-01 test" },
         Test { i: "test t:2020-03-02 rec:+1m due:2020-03-01", d: "test t:2020-04-02 rec:+1m due:2020-04-01" },
-        Test { i: "test t:2020-02-29 rec:1m due:2020-03-01", d: "test t:2020-03-01 rec:1m due:2020-03-02" },
+        Test { i: "test t:2020-02-29 rec:1m due:2020-03-01", d: "test t:2020-03-02 rec:1m due:2020-03-02" },
         Test { i: "2020-01-01 test rec:7d", d: "2020-01-01 test rec:7d" },
         Test { i: "2020-01-01 test due:2020-01-01", d: "2020-01-01 test due:2020-01-01" },
     ];

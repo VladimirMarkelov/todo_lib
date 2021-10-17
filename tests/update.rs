@@ -85,6 +85,9 @@ fn done() {
         assert!(i == 2 || t[i].finished);
     }
     assert_eq!(t.len(), orig_len + must_change);
+    for idx in orig_len..orig_len + must_change {
+        assert!(!t[idx].finished);
+    }
 }
 
 #[test]

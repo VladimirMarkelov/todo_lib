@@ -313,39 +313,28 @@ impl Task {
         if self.finished {
             return false;
         }
+        if self.due_date.is_none() && self.threshold_date.is_none() {
+            return false;
+        }
         let rec = match self.recurrence {
             None => return false,
             Some(r) => r,
         };
-        if self.recurrence.is_none() || (self.due_date.is_none() && self.threshold_date.is_none()) {
-            return false;
-        }
-        let mut diff = chrono::Duration::days(0);
-        let mut next_thr = chrono::NaiveDate::from_ymd(2020, 1, 1);
         if let Some(due) = self.due_date {
-            let old = format!("due:{}", utils::format_date(due));
             let mut new_due = if rec.strict { rec.next_date(due) } else { rec.next_date(date) };
             while new_due < date {
                 new_due = rec.next_date(new_due);
             }
+            let old = format!("due:{}", utils::format_date(due));
             let new = format!("due:{}", utils::format_date(new_due));
             self.due_date = Some(new_due);
             self.replace_tag(&old, &new);
-            if let Some(thr) = self.threshold_date {
-                diff = due - thr;
-                next_thr = new_due - (due - thr);
-            }
         }
         if let Some(thr) = self.threshold_date {
-            let new_thr = if diff.num_days() != 0 {
-                next_thr
-            } else {
-                let mut nthr = if rec.strict { rec.next_date(thr) } else { rec.next_date(date) };
-                while nthr < date {
-                    nthr = rec.next_date(nthr);
-                }
-                nthr
-            };
+            let mut new_thr = if rec.strict { rec.next_date(thr) } else { rec.next_date(date) };
+            while new_thr < date {
+                new_thr = rec.next_date(new_thr);
+            }
             let old = format!("t:{}", utils::format_date(thr));
             let new = format!("t:{}", utils::format_date(new_thr));
             self.threshold_date = Some(new_thr);
