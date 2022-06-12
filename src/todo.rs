@@ -1,4 +1,3 @@
-use failure::ResultExt;
 use std::cmp::Ordering;
 use std::ffi::OsStr;
 use std::fs;
@@ -144,7 +143,7 @@ pub fn load(filename: &Path) -> Result<TaskVec, terr::TodoError> {
         return Ok(tasks);
     }
 
-    let file = File::open(filename).context(terr::TodoErrorKind::LoadFailed)?;
+    let file = File::open(filename).map_err(|_| terr::TodoError::LoadFailed)?;
     let now = chrono::Local::now().date().naive_local();
 
     let br = BufReader::new(&file);
@@ -161,18 +160,13 @@ pub fn load(filename: &Path) -> Result<TaskVec, terr::TodoError> {
 pub fn save(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError> {
     let tmpname = filename.with_extension(OsStr::new("todo.tmp"));
 
-    let mut output = File::create(&tmpname).context(terr::TodoErrorKind::SaveFailed)?;
+    let mut output = File::create(&tmpname).map_err(|_| terr::TodoError::SaveFailed)?;
     for t in tasks {
         let line = format!("{}\n", t);
-        if write!(output, "{}", line).is_err() {
-            return Err(terr::TodoError::from(terr::TodoErrorKind::SaveFailed));
-        }
+        write!(output, "{}", line).map_err(|_| terr::TodoError::FileWriteFailed)?;
     }
 
-    if fs::rename(tmpname, filename).is_err() {
-        return Err(terr::TodoError::from(terr::TodoErrorKind::SaveFailed));
-    }
-
+    fs::rename(tmpname, filename).map_err(|e| terr::TodoError::IOError(e.to_string()))?;
     Ok(())
 }
 
@@ -188,11 +182,11 @@ pub fn archive(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError
         .append(true)
         .create(true)
         .open(&filename)
-        .context(terr::TodoErrorKind::AppendFailed)?;
+        .map_err(|_| terr::TodoError::AppendFailed)?;
 
     for t in tasks {
         let line = format!("{}\n", t);
-        write!(output, "{}", line).context(terr::TodoErrorKind::FileWriteFailed)?;
+        write!(output, "{}", line).map_err(|_| terr::TodoError::FileWriteFailed)?;
     }
 
     Ok(())

@@ -1,3 +1,7 @@
+2022-06-12 - version 5.0.0
+[*] Replace 'failure' crate with 'thiserror' one
+[*] Clippy fixes
+
 2021-10-17 - version 4.0.0
 [+] Threshold date also move forward like due dates when a todo is done
 [*] Instead of modifying an existing todo with recurrence, "done" marks the
