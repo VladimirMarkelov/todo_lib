@@ -212,7 +212,7 @@ impl Default for Recurrence {
 impl std::str::FromStr for Recurrence {
     type Err = String;
     fn from_str(s: &str) -> Result<Recurrence, String> {
-        Recurrence::parse(&s.to_owned())
+        Recurrence::parse(s)
     }
 }
 

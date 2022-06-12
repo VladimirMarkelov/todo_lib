@@ -38,16 +38,10 @@ pub enum TodoStatus {
 }
 
 /// An arbitrary range of values for todo properties check. The range is inclusive
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct ValueRange {
     pub low: i64,
     pub high: i64,
-}
-
-impl Default for ValueRange {
-    fn default() -> ValueRange {
-        ValueRange { low: 0, high: 0 }
-    }
 }
 
 /// A type of comparison for the property.

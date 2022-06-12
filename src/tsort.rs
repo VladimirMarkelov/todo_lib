@@ -7,7 +7,7 @@ use crate::todotxt;
 /// Sorting rules. First, the list of todos is sorted by the fields defined
 /// in `fields` in order of appearance. Then, if `rev` is `true` the list is
 /// reversed
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Conf {
     /// comma separated list of field to sort by. Supported field names:
     /// * `pri` or `prioroty` - sort by priority (without priority are the last ones);
@@ -22,12 +22,6 @@ pub struct Conf {
     pub fields: Option<String>,
     /// reverse the list after sorting
     pub rev: bool,
-}
-
-impl Default for Conf {
-    fn default() -> Conf {
-        Conf { fields: None, rev: false }
-    }
 }
 
 pub(crate) fn cmp_opt_dates(d1: Option<chrono::NaiveDate>, d2: Option<chrono::NaiveDate>) -> Ordering {
