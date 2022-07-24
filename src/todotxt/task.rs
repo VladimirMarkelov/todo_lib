@@ -235,6 +235,7 @@ impl Task {
             }
             return false;
         }
+        #[allow(clippy::format_push_string)]
         match self.tags.get(tag) {
             None => {
                 self.subject += &format!(" {}:{}", tag, value);

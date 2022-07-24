@@ -435,10 +435,11 @@ fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
             if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence) {
                 if let Some(nr) = &c.recurrence {
                     let new_rec = format!("{}", nr);
-                    if task.update_tag(&new_rec) && task.finished {
+                    let updated = task.update_tag(&new_rec);
+                    if updated && task.finished {
                         task.uncomplete();
-                        return true;
                     }
+                    return updated;
                 }
             }
         }
