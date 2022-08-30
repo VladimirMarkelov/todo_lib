@@ -249,7 +249,6 @@ fn item_threshold() {
     let t = init_tasks();
 
     let mut cflt = tfilter::Conf::default();
-    cflt.all = tfilter::TodoStatus::All;
 
     // with thr
     cflt.thr = Some(tfilter::DateRange { span: tfilter::ValueSpan::Any, days: Default::default() });
@@ -259,7 +258,7 @@ fn item_threshold() {
     // without thr
     cflt.thr = Some(tfilter::DateRange { span: tfilter::ValueSpan::None, days: Default::default() });
     let ids = tfilter::filter(&t, &cflt);
-    assert_eq!(ids, vec![0, 1, 3, 4, 5]);
+    assert_eq!(ids, vec![0, 3, 4, 5]);
 
     let sconf = tsort::Conf { fields: Some("thr".to_string()), rev: false };
     let mut ids: todo::IDVec = vec![0, 1, 2, 3, 4, 5];
