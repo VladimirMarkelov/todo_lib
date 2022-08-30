@@ -259,6 +259,9 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
                 && next_task.recurrence.is_some()
                 && (next_task.due_date.is_some() || next_task.threshold_date.is_some())
             {
+                if next_task.create_date.is_some() {
+                    next_task.create_date = Some(now);
+                }
                 next_task.next_dates(now);
                 tasks.push(next_task);
             }

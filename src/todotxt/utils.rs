@@ -11,7 +11,7 @@ pub const DUE_TAG_FULL: &str = "due:";
 pub const THR_TAG_FULL: &str = "t:";
 pub const REC_TAG_FULL: &str = "rec:";
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum Period {
     Day,
     Week,
@@ -19,7 +19,7 @@ pub enum Period {
     Year,
 }
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub struct Recurrence {
     pub period: Period,
     pub count: u8,

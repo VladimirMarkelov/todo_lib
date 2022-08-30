@@ -4,7 +4,7 @@ use chrono::{Local, NaiveDate};
 
 use crate::todotxt::utils;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Task {
     pub subject: String,
     pub priority: u8,

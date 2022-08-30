@@ -27,7 +27,7 @@ pub enum ItemRange {
 }
 
 /// Todo state range
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TodoStatus {
     /// Only todos that are incompleted yet
     Active,
@@ -38,7 +38,7 @@ pub enum TodoStatus {
 }
 
 /// An arbitrary range of values for todo properties check. The range is inclusive
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ValueRange {
     pub low: i64,
     pub high: i64,
@@ -51,7 +51,7 @@ pub struct ValueRange {
 /// * `priority`: `None`, `Any`, `Equal`, `Lower`, and `Higher`;
 /// * `recurrence`: `None` and `Any`;
 /// * `due`: `None`, `Any`, `Lower`, and `Range`;
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValueSpan {
     /// Do not check the property value
     None, // without
@@ -73,7 +73,7 @@ pub enum ValueSpan {
 
 /// For filtering by date range or value. `days` is inclusive range and
 /// is not used when `span` is `Any` or `None`
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DateRange {
     pub days: ValueRange,
     pub span: ValueSpan,
@@ -85,7 +85,7 @@ impl Default for DateRange {
 }
 
 /// For filtering by recurrence. Only `Any` and `None` are supported
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Recurrence {
     pub span: ValueSpan,
 }
@@ -96,7 +96,7 @@ impl Default for Recurrence {
 }
 
 /// For filtering by priority
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Priority {
     pub value: u8,
     pub span: ValueSpan,
@@ -108,7 +108,7 @@ impl Default for Priority {
 }
 
 /// For filtering by timer
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Timer {
     pub span: ValueSpan,
     pub value: usize,
@@ -452,7 +452,7 @@ fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::
     let mut new_v: todo::IDVec = Vec::new();
     for i in v.iter() {
         let idx = *i;
-        if date_in_range(&tasks[idx].threshold_date, &flt) {
+        if c.all == TodoStatus::All || date_in_range(&tasks[idx].threshold_date, &flt) {
             new_v.push(idx);
         }
     }
