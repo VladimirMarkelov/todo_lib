@@ -181,7 +181,7 @@ pub fn archive(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError
         .write(true)
         .append(true)
         .create(true)
-        .open(&filename)
+        .open(filename)
         .map_err(|_| terr::TodoError::AppendFailed)?;
 
     for t in tasks {
@@ -254,7 +254,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
         if c.done {
             bools[i] = timer::stop_timer(&mut tasks[*idx]);
             let mut next_task = (tasks[*idx]).clone();
-            let completed = (&mut tasks[*idx]).complete(now);
+            let completed = tasks[*idx].complete(now);
             if completed
                 && next_task.recurrence.is_some()
                 && (next_task.due_date.is_some() || next_task.threshold_date.is_some())

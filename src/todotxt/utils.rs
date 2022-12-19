@@ -77,7 +77,7 @@ pub fn parse_priority(s: &str) -> Result<u8, String> {
     if !(b'A'..=b'Z').contains(&priority) {
         return Err(format!("invalid priority '{}'", s));
     }
-    Ok((priority - b'A') as u8)
+    Ok(priority - b'A')
 }
 
 pub fn format_priority(priority: u8) -> String {
