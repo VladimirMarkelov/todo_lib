@@ -125,7 +125,10 @@ pub fn parse_date(s: &str, base: NaiveDate) -> Result<NaiveDate, String> {
     if vals[2] > mx {
         vals[2] = mx;
     }
-    Ok(NaiveDate::from_ymd(vals[0] as i32, vals[1], vals[2]))
+    match NaiveDate::from_ymd_opt(vals[0] as i32, vals[1], vals[2]) {
+        Some(d) => Ok(d),
+        None => Err(format!("invalid date generated '{}-{}-{}'", vals[0], vals[1], vals[2])),
+    }
 }
 
 pub fn format_date(date: NaiveDate) -> String {
@@ -280,7 +283,11 @@ impl Recurrence {
                 if (last && mx != d) || (mx < d) {
                     d = mx;
                 }
-                NaiveDate::from_ymd(y, m, d)
+                if let Some(d) = NaiveDate::from_ymd_opt(y, m, d) {
+                    d
+                } else {
+                    base
+                }
             }
             Period::Year => {
                 let y = base.year() + self.count as i32;
@@ -290,7 +297,11 @@ impl Recurrence {
                 if (last && mx != d) || (mx < d) {
                     d = mx;
                 }
-                NaiveDate::from_ymd(y, m, d)
+                if let Some(d) = NaiveDate::from_ymd_opt(y, m, d) {
+                    d
+                } else {
+                    base
+                }
             }
         }
     }

@@ -460,7 +460,7 @@ fn filter_threshold(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::
 }
 
 fn date_in_range(date: &Option<chrono::NaiveDate>, range: &DateRange) -> bool {
-    let today = chrono::Local::now().date().naive_local();
+    let today = chrono::Local::now().date_naive();
     match range.span {
         ValueSpan::None => date.is_none(),
         ValueSpan::Any => date.is_some(),

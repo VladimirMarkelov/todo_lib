@@ -40,18 +40,18 @@ fn abs_dates() {
         eq: bool,
     }
     let data: Vec<Test> = vec![
-        Test { i: "", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
-        Test { i: "0-1-1", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
-        Test { i: "1-0-1", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
-        Test { i: "1-1-0", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
-        Test { i: "abcde", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
-        Test { i: "1900-15-15", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
-        Test { i: "1900-11-32", o: NaiveDate::from_ymd(1000, 1, 1), err: true, eq: true },
-        Test { i: "2020-11--23", o: NaiveDate::from_ymd(2020, 11, 23), err: true, eq: true },
-        Test { i: "2020-11-23", o: NaiveDate::from_ymd(2020, 11, 23), err: false, eq: true },
-        Test { i: "2020-11-31", o: NaiveDate::from_ymd(2020, 11, 30), err: false, eq: false },
+        Test { i: "", o: NaiveDate::from_ymd_opt(1000, 1, 1).unwrap(), err: true, eq: true },
+        Test { i: "0-1-1", o: NaiveDate::from_ymd_opt(1000, 1, 1).unwrap(), err: true, eq: true },
+        Test { i: "1-0-1", o: NaiveDate::from_ymd_opt(1000, 1, 1).unwrap(), err: true, eq: true },
+        Test { i: "1-1-0", o: NaiveDate::from_ymd_opt(1000, 1, 1).unwrap(), err: true, eq: true },
+        Test { i: "abcde", o: NaiveDate::from_ymd_opt(1000, 1, 1).unwrap(), err: true, eq: true },
+        Test { i: "1900-15-15", o: NaiveDate::from_ymd_opt(1000, 1, 1).unwrap(), err: true, eq: true },
+        Test { i: "1900-11-32", o: NaiveDate::from_ymd_opt(1000, 1, 1).unwrap(), err: true, eq: true },
+        Test { i: "2020-11--23", o: NaiveDate::from_ymd_opt(2020, 11, 23).unwrap(), err: true, eq: true },
+        Test { i: "2020-11-23", o: NaiveDate::from_ymd_opt(2020, 11, 23).unwrap(), err: false, eq: true },
+        Test { i: "2020-11-31", o: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap(), err: false, eq: false },
     ];
-    let base = NaiveDate::from_ymd(2020, 10, 20);
+    let base = NaiveDate::from_ymd_opt(2020, 10, 20).unwrap();
     for d in data.iter() {
         let p = parse_date(d.i, base);
         if d.err {
@@ -74,13 +74,29 @@ fn rel_dates() {
         m: NaiveDate,
         e: NaiveDate,
     }
-    let base_mid = NaiveDate::from_ymd(2021, 3, 15);
-    let base_end = NaiveDate::from_ymd(2021, 2, 28);
+    let base_mid = NaiveDate::from_ymd_opt(2021, 3, 15).unwrap();
+    let base_end = NaiveDate::from_ymd_opt(2021, 2, 28).unwrap();
     let data: Vec<Test> = vec![
-        Test { i: "12d", m: NaiveDate::from_ymd(2021, 3, 27), e: NaiveDate::from_ymd(2021, 3, 12) },
-        Test { i: "1w", m: NaiveDate::from_ymd(2021, 3, 22), e: NaiveDate::from_ymd(2021, 3, 7) },
-        Test { i: "2m", m: NaiveDate::from_ymd(2021, 5, 15), e: NaiveDate::from_ymd(2021, 4, 30) },
-        Test { i: "3y", m: NaiveDate::from_ymd(2024, 3, 15), e: NaiveDate::from_ymd(2024, 2, 29) },
+        Test {
+            i: "12d",
+            m: NaiveDate::from_ymd_opt(2021, 3, 27).unwrap(),
+            e: NaiveDate::from_ymd_opt(2021, 3, 12).unwrap(),
+        },
+        Test {
+            i: "1w",
+            m: NaiveDate::from_ymd_opt(2021, 3, 22).unwrap(),
+            e: NaiveDate::from_ymd_opt(2021, 3, 7).unwrap(),
+        },
+        Test {
+            i: "2m",
+            m: NaiveDate::from_ymd_opt(2021, 5, 15).unwrap(),
+            e: NaiveDate::from_ymd_opt(2021, 4, 30).unwrap(),
+        },
+        Test {
+            i: "3y",
+            m: NaiveDate::from_ymd_opt(2024, 3, 15).unwrap(),
+            e: NaiveDate::from_ymd_opt(2024, 2, 29).unwrap(),
+        },
     ];
     for d in data.iter() {
         let p = parse_date(d.i, base_mid).unwrap();

@@ -144,7 +144,7 @@ pub fn load(filename: &Path) -> Result<TaskVec, terr::TodoError> {
     }
 
     let file = File::open(filename).map_err(|_| terr::TodoError::LoadFailed)?;
-    let now = chrono::Local::now().date().naive_local();
+    let now = chrono::Local::now().date_naive();
 
     let br = BufReader::new(&file);
     for l in br.lines().flatten() {
@@ -228,10 +228,10 @@ pub fn add(tasks: &mut TaskVec, c: &Conf) -> usize {
         Some(subj) => subj,
     };
 
-    let now = chrono::Local::now().date().naive_local();
+    let now = chrono::Local::now().date_naive();
     let mut t = todotxt::Task::parse(s, now);
     if c.auto_create_date && t.create_date.is_none() {
-        t.create_date = Some(chrono::Local::now().date().naive_local());
+        t.create_date = Some(chrono::Local::now().date_naive());
     }
     tasks.push(t);
     tasks.len() - 1
@@ -244,7 +244,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
     let longvec = make_id_vec(tasks.len());
     let id_iter = if let Some(v) = ids { v } else { &longvec };
     let mut bools = vec![false; id_iter.len()];
-    let now = chrono::Local::now().date().naive_local();
+    let now = chrono::Local::now().date_naive();
 
     for (i, idx) in id_iter.iter().enumerate() {
         if *idx >= tasks.len() {
@@ -548,7 +548,7 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
 
     let longvec = make_id_vec(tasks.len());
     let idlist = if let Some(v) = ids { v } else { &longvec };
-    let now = chrono::Local::now().date().naive_local();
+    let now = chrono::Local::now().date_naive();
 
     let mut bools = vec![false; idlist.len()];
     for (i, idx) in idlist.iter().enumerate() {

@@ -46,7 +46,7 @@ pub fn start_timer(task: &mut todotxt::Task) -> bool {
 fn calc_time_spent(task: &todotxt::Task) -> Option<i64> {
     if let Some(started) = task.tags.get(todo::TIMER_TAG) {
         if let Ok(n) = started.parse::<i64>() {
-            let dt_start = chrono::NaiveDateTime::from_timestamp(n, 0);
+            let dt_start = chrono::NaiveDateTime::from_timestamp_opt(n, 0)?;
             let diff = chrono::Utc::now().naive_utc() - dt_start;
 
             let mut spent: i64 =

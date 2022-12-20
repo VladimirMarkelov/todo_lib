@@ -19,7 +19,7 @@ fn parse_tasks_simple() {
             i: "2020-01-03 just text",
             t: Task {
                 subject: "just text".to_string(),
-                create_date: Some(NaiveDate::from_ymd(2020, 01, 03)),
+                create_date: Some(NaiveDate::from_ymd_opt(2020, 01, 03).unwrap()),
                 ..Default::default()
             },
         },
@@ -27,7 +27,7 @@ fn parse_tasks_simple() {
             i: "2020-02-03 2020-01-03 just text",
             t: Task {
                 subject: "2020-01-03 just text".to_string(),
-                create_date: Some(NaiveDate::from_ymd(2020, 02, 03)),
+                create_date: Some(NaiveDate::from_ymd_opt(2020, 02, 03).unwrap()),
                 ..Default::default()
             },
         },
@@ -35,8 +35,8 @@ fn parse_tasks_simple() {
             i: "x 2020-02-03 2020-01-03 just text",
             t: Task {
                 subject: "just text".to_string(),
-                create_date: Some(NaiveDate::from_ymd(2020, 01, 03)),
-                finish_date: Some(NaiveDate::from_ymd(2020, 02, 03)),
+                create_date: Some(NaiveDate::from_ymd_opt(2020, 01, 03).unwrap()),
+                finish_date: Some(NaiveDate::from_ymd_opt(2020, 02, 03).unwrap()),
                 finished: true,
                 ..Default::default()
             },
@@ -46,8 +46,8 @@ fn parse_tasks_simple() {
             t: Task {
                 subject: "just text".to_string(),
                 priority: 4,
-                create_date: Some(NaiveDate::from_ymd(2020, 01, 03)),
-                finish_date: Some(NaiveDate::from_ymd(2020, 02, 03)),
+                create_date: Some(NaiveDate::from_ymd_opt(2020, 01, 03).unwrap()),
+                finish_date: Some(NaiveDate::from_ymd_opt(2020, 02, 03).unwrap()),
                 finished: true,
                 ..Default::default()
             },
@@ -73,7 +73,7 @@ fn parse_tasks_simple() {
             t: Task { subject: "2020-01-03a just text".to_string(), ..Default::default() },
         },
     ];
-    let base = NaiveDate::from_ymd(2020, 3, 15);
+    let base = NaiveDate::from_ymd_opt(2020, 3, 15).unwrap();
     for d in data.iter() {
         let t = Task::parse(d.i, base);
         assert_eq!(d.t, t, "{}", d.i);
@@ -117,7 +117,7 @@ fn parse_tasks_tags() {
             hv: vec!["2w", "230", "20"],
         },
     ];
-    let base = NaiveDate::from_ymd(2020, 3, 15);
+    let base = NaiveDate::from_ymd_opt(2020, 3, 15).unwrap();
     for d in data.iter() {
         let t = Task::parse(d.i, base);
         if t.tags.is_empty() {
@@ -154,7 +154,7 @@ fn complete_uncomplete() {
         Test { i: "test rec:1m due:2020-03-01", d: "x test rec:1m due:2020-03-01", u: "test rec:1m due:2020-03-01" },
         Test { i: "2020-01-01 test rec:7d", d: "x 2020-02-02 2020-01-01 test rec:7d", u: "2020-01-01 test rec:7d" },
     ];
-    let base = NaiveDate::from_ymd(2020, 2, 2);
+    let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, base);
         t.complete(base);
@@ -180,7 +180,7 @@ fn next_date() {
         Test { i: "2020-01-01 test rec:7d", d: "2020-01-01 test rec:7d" },
         Test { i: "2020-01-01 test due:2020-01-01", d: "2020-01-01 test due:2020-01-01" },
     ];
-    let base = NaiveDate::from_ymd(2020, 2, 2);
+    let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, base);
         let orig_due = t.due_date.clone();
@@ -217,7 +217,7 @@ fn replace_projects() {
         Test { i: "efg ++tag str abc +tag", o: "efg ++tag str abc +newstr", r: "+tag", w: "+newstr" },
     ];
 
-    let dt = NaiveDate::from_ymd(2021, 01, 05);
+    let dt = NaiveDate::from_ymd_opt(2021, 01, 05).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, dt);
         t.replace_project(d.r, d.w);
@@ -244,7 +244,7 @@ fn replace_contexts() {
         Test { i: "efg @@tag str abc @tag", o: "efg @@tag str abc @newstr", r: "@tag", w: "@newstr" },
     ];
 
-    let dt = NaiveDate::from_ymd(2021, 01, 05);
+    let dt = NaiveDate::from_ymd_opt(2021, 01, 05).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, dt);
         t.replace_context(d.r, d.w);
@@ -272,7 +272,7 @@ fn replace_recurrences() {
         Test { i: "rrec:11 text rec:22", o: "rrec:11 text rec:345", w: "345" },
     ];
 
-    let dt = NaiveDate::from_ymd(2021, 01, 05);
+    let dt = NaiveDate::from_ymd_opt(2021, 01, 05).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, dt);
         t.update_tag_with_value("rec", d.w);

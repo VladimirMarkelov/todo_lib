@@ -2,7 +2,7 @@ use todo_lib::{todo, todotxt};
 
 fn init_tasks() -> todo::TaskVec {
     let mut t = Vec::new();
-    let now = chrono::Local::now().date().naive_local();
+    let now = chrono::Local::now().date_naive();
 
     t.push(todotxt::Task::parse("call mother +family @parents", now));
     t.push(todotxt::Task::parse(
@@ -19,7 +19,7 @@ fn init_tasks() -> todo::TaskVec {
 
 fn init_task_lists() -> todo::TaskVec {
     let mut t = Vec::new();
-    let now = chrono::Local::now().date().naive_local();
+    let now = chrono::Local::now().date_naive();
 
     t.push(todotxt::Task::parse("call mother +Family @parents", now));
     t.push(todotxt::Task::parse("call @Parents @father +family", now));

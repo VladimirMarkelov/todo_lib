@@ -262,7 +262,7 @@ impl Task {
             utils::DUE_TAG => {
                 if value.is_empty() {
                     self.due_date = None;
-                } else if let Ok(dt) = utils::parse_date(value, Local::now().date().naive_local()) {
+                } else if let Ok(dt) = utils::parse_date(value, Local::now().date_naive()) {
                     self.due_date = Some(dt);
                 } else {
                     self.due_date = None;
@@ -271,7 +271,7 @@ impl Task {
             utils::THR_TAG => {
                 if value.is_empty() {
                     self.threshold_date = None;
-                } else if let Ok(dt) = utils::parse_date(value, Local::now().date().naive_local()) {
+                } else if let Ok(dt) = utils::parse_date(value, Local::now().date_naive()) {
                     self.threshold_date = Some(dt);
                 } else {
                     self.threshold_date = None;

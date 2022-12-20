@@ -3,7 +3,7 @@ use todo_lib::{tfilter, todo, todotxt, tsort};
 
 fn init_tasks() -> todo::TaskVec {
     let mut t = Vec::new();
-    let now = chrono::Local::now().date().naive_local();
+    let now = chrono::Local::now().date_naive();
 
     t.push(todotxt::Task::parse("call mother +family @parents", now));
     t.push(todotxt::Task::parse(
