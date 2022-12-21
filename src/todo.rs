@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
@@ -33,6 +34,7 @@ pub type ChangedSlice = [bool];
 /// * recurrence: `Set`, `Delete`;
 /// * projects: `Set`, `Delete`, `Replace`;
 /// * contexts: `Set`, `Delete`, `Replace`;
+/// * tags: `Set`, `Delete`;
 #[derive(Debug, Clone)]
 pub enum Action {
     /// do not touch the property
@@ -103,6 +105,15 @@ pub struct Conf {
     /// Automatically set creation date to today if it is not defined in subject
     /// when adding a new todo
     pub auto_create_date: bool,
+    /// Update tags with new values. When editing, empty value means
+    /// deleting the tag. When filtering, empty value means `any`.
+    /// Hashmap: <TagName> - <TagValue>.
+    /// Use it only to change tags that are not standard ones(due, recurrence,
+    /// and threshold). These tags are ignored by the function 'edit'.
+    pub tags: Option<HashMap<String, String>>,
+    /// Type of operation applied to old tags.
+    /// Only 'Set' and 'Delete' operations are supported
+    pub tags_act: Action,
 }
 
 impl Default for Conf {
@@ -123,6 +134,8 @@ impl Default for Conf {
             contexts: Vec::new(),
             context_act: Action::None,
             auto_create_date: false,
+            tags: None,
+            tags_act: Action::None,
         }
     }
 }
@@ -133,6 +146,19 @@ pub(crate) fn make_id_vec(sz: usize) -> IDVec {
         v.push(i);
     }
     v
+}
+
+/// Returns if the tag needs special processing. All 'special' tags cannot be
+/// changed via 'update_tags' function because they usually requires running
+/// some extra operations on the data after a change (e.g, update internal
+/// fields in addition to updating the tag HashMap).
+pub fn is_tag_special(tag: &str) -> bool {
+    tag == todotxt::DUE_TAG
+        || tag == todotxt::DUE_TAG_FULL
+        || tag == todotxt::THR_TAG
+        || tag == todotxt::THR_TAG_FULL
+        || tag == todotxt::REC_TAG
+        || tag == todotxt::REC_TAG_FULL
 }
 
 /// Load a list of todo from a file in todo.txt format. If the file does not
@@ -518,6 +544,34 @@ fn update_contexts(task: &mut todotxt::Task, c: &Conf) -> bool {
     changed
 }
 
+fn tag_update_check(task: &mut todotxt::Task, tag: &str, value: &str) -> bool {
+    let old_subj = task.subject.clone();
+    let updated = task.update_tag_with_value(tag, value);
+    updated && old_subj != task.subject
+}
+
+fn update_tags(task: &mut todotxt::Task, c: &Conf) -> bool {
+    let mut changed = false;
+    if let Some(tag_list) = &c.tags {
+        for (tag, value) in tag_list {
+            let tag = tag.trim_end_matches(':');
+            if is_tag_special(tag) {
+                continue;
+            }
+            match c.tags_act {
+                Action::Delete => {
+                    changed |= tag_update_check(task, tag, "");
+                }
+                Action::Set => {
+                    changed |= tag_update_check(task, tag, value);
+                }
+                _ => {}
+            }
+        }
+    }
+    changed
+}
+
 /// Modifies existing todos.
 ///
 /// A powerful function to transform todo list. List of operations:
@@ -528,6 +582,7 @@ fn update_contexts(task: &mut todotxt::Task, c: &Conf) -> bool {
 ///     `done` flag;
 /// - for project: add a new, remove old, replace old with new one;
 /// - for context: add a new, remove old, replace old with new one;
+/// - for an arbitrary tag: add a new, remove old, replace old with a new one;
 ///
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be undone. If it is `None`
@@ -575,6 +630,7 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
         bools[i] |= update_recurrence(&mut tasks[id], c);
         bools[i] |= update_projects(&mut tasks[id], c);
         bools[i] |= update_contexts(&mut tasks[id], c);
+        bools[i] |= update_tags(&mut tasks[id], c);
     }
 
     bools

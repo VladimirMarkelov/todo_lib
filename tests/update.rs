@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use todo_lib::{todo, todotxt};
 
 fn init_tasks() -> todo::TaskVec {
@@ -145,4 +146,98 @@ fn recs() {
     c.recurrence_act = todo::Action::Delete;
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![false, false, false, false, true, true]);
+}
+
+#[test]
+fn tag_update_test() {
+    struct Test {
+        subj: &'static str,
+        tags: Vec<&'static str>,
+        res: &'static str,
+        delete: bool,
+        changes: bool,
+    }
+    let data: Vec<Test> = vec![
+        Test {
+            subj: "item:ball take to who:me game game:there",
+            tags: vec!["game:here", "item:puck"],
+            res: "item:puck take to who:me game game:here",
+            delete: false,
+            changes: true,
+        },
+        Test {
+            subj: "item:ball take to who:me game game:there",
+            tags: vec!["gam", "item"],
+            res: "take to who:me game game:there",
+            delete: true,
+            changes: true,
+        },
+        Test {
+            subj: "item:ball take to who:me why:because game game:there",
+            tags: vec!["game:new", "item:some", "who:that", "wh:some"],
+            res: "take to why:because game",
+            delete: true,
+            changes: true,
+        },
+        Test {
+            subj: "item:ball take to who:me game game:there",
+            tags: vec!["game", "item"],
+            res: "take to who:me game",
+            delete: false,
+            changes: true,
+        },
+        Test {
+            subj: "item:ball take to who:me game game:there",
+            tags: vec!["who:they", "ite"],
+            res: "item:ball take to who:they game game:there",
+            delete: false,
+            changes: true,
+        },
+        Test {
+            subj: "item:ball take to who:me game game:there",
+            tags: vec!["who:they", "item:puck", "date:tomorrow", "game:somewhere"],
+            res: "item:puck take to who:they game game:somewhere date:tomorrow",
+            delete: false,
+            changes: true,
+        },
+        Test {
+            subj: "item:ball take to who:me game game:there",
+            tags: vec!["who:me", "item:ball"],
+            res: "item:ball take to who:me game game:there",
+            delete: false,
+            changes: false,
+        },
+        Test {
+            subj: "item:ball take to who:me game game:there",
+            tags: vec!["wh:me", "ite"],
+            res: "item:ball take to who:me game game:there",
+            delete: true,
+            changes: false,
+        },
+    ];
+
+    let now = chrono::Local::now().date_naive();
+    for (idx, test) in data.iter().enumerate() {
+        let mut t = Vec::new();
+        t.push(todotxt::Task::parse(test.subj, now));
+
+        let mut c: todo::Conf = todo::Conf::default();
+        c.tags_act = if test.delete { todo::Action::Delete } else { todo::Action::Set };
+        let mut hm = HashMap::<String, String>::new();
+        for tag in &test.tags {
+            if let Some(pos) = tag.find(':') {
+                hm.insert(tag[..pos].to_string(), tag[pos + 1..].to_string());
+            } else {
+                hm.insert(tag.to_string(), String::new());
+            }
+        }
+        c.tags = Some(hm);
+        let changed = todo::edit(&mut t, None, &c);
+        if test.changes {
+            assert!(changed.len() > 0 && changed[0]);
+        } else {
+            assert!(changed.len() == 0 || !changed[0]);
+        }
+        assert_eq!(test.res, &t[0].subject, "\n{}. {} != {}", idx, t[0].subject, test.res);
+    }
 }
