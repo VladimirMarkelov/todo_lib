@@ -117,6 +117,7 @@ What can be modified:
 * `recurrence` - set or remove
 * `projects` - add, remove or replace
 * `contexts` - add, remove or replace
+* `tags` - add, remove or replace
 
 #### Time tracking support
 
