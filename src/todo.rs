@@ -35,7 +35,7 @@ pub type ChangedSlice = [bool];
 /// * projects: `Set`, `Delete`, `Replace`;
 /// * contexts: `Set`, `Delete`, `Replace`;
 /// * tags: `Set`, `Delete`;
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Action {
     /// do not touch the property
     None,
@@ -114,6 +114,11 @@ pub struct Conf {
     /// Type of operation applied to old tags.
     /// Only 'Set' and 'Delete' operations are supported
     pub tags_act: Action,
+    /// Update hashtags
+    pub hashtags: Option<Vec<String>>,
+    /// Type of operation applied to old hashtags.
+    /// Only 'Set', 'Delete', and 'Replace' are supported.
+    pub hashtags_act: Action,
 }
 
 impl Default for Conf {
@@ -136,6 +141,8 @@ impl Default for Conf {
             auto_create_date: false,
             tags: None,
             tags_act: Action::None,
+            hashtags: None,
+            hashtags_act: Action::None,
         }
     }
 }
@@ -547,6 +554,11 @@ fn update_contexts(task: &mut todotxt::Task, c: &Conf) -> bool {
 fn tag_update_check(task: &mut todotxt::Task, tag: &str, value: &str) -> bool {
     let old_subj = task.subject.clone();
     let updated = task.update_tag_with_value(tag, value);
+    if value.is_empty() {
+        task.tags.remove(tag);
+    } else {
+        task.tags.insert(tag.to_string(), value.to_string());
+    }
     updated && old_subj != task.subject
 }
 
@@ -564,6 +576,73 @@ fn update_tags(task: &mut todotxt::Task, c: &Conf) -> bool {
                 }
                 Action::Set => {
                     changed |= tag_update_check(task, tag, value);
+                }
+                _ => {}
+            }
+        }
+    }
+    changed
+}
+
+pub fn split_in_two_tags(s: &str) -> Option<(&str, &str)> {
+    let s = s.trim_end_matches(|c| c == ':' || c == ',');
+    if let Some(pos) = s.find(':') {
+        Some((&s[..pos], &s[pos + 1..]))
+    } else {
+        s.find(',').map(|pos| (&s[..pos], &s[pos + 1..]))
+    }
+}
+
+fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) -> bool {
+    let old_subj = task.subject.clone();
+    let mut new_subj = old_subj.clone();
+    let hashtag = hashtag.trim_start_matches('#');
+    let hashtag_full = format!("#{}", hashtag);
+    match act {
+        Action::Delete => {
+            task.hashtags.retain(|h| h != hashtag);
+            todotxt::replace_word(&mut new_subj, &hashtag_full, "");
+            if new_subj != old_subj {
+                task.subject = new_subj;
+                return true;
+            }
+        }
+        Action::Set => {
+            if !task.hashtags.contains(&hashtag.to_string()) {
+                task.hashtags.push(hashtag.to_string());
+                task.subject = format!("{} {}", task.subject, hashtag_full);
+                return true;
+            }
+        }
+        Action::Replace => {
+            if let Some((old, new)) = split_in_two_tags(hashtag) {
+                let old = old.trim_start_matches('#');
+                let old_str = old.to_string();
+                let new = new.trim_start_matches('#');
+                if old != new && task.hashtags.contains(&old.to_string()) {
+                    task.hashtags.retain(|h| h != &old_str);
+                    task.hashtags.push(new.to_string());
+                    let old = format!("#{}", old);
+                    let new = format!("#{}", new);
+                    todotxt::replace_word(&mut new_subj, &old, &new);
+                    task.subject = new_subj;
+                    return true;
+                }
+            }
+        }
+        _ => {}
+    }
+    false
+}
+
+fn update_hashtags(task: &mut todotxt::Task, c: &Conf) -> bool {
+    let mut changed = false;
+    if let Some(hashtag_list) = &c.hashtags {
+        for hashtag in hashtag_list {
+            let hashtag = hashtag.trim_start_matches('#');
+            match c.hashtags_act {
+                Action::Delete | Action::Set | Action::Replace => {
+                    changed |= hashtag_update_check(task, hashtag, c.hashtags_act)
                 }
                 _ => {}
             }
@@ -631,6 +710,7 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
         bools[i] |= update_projects(&mut tasks[id], c);
         bools[i] |= update_contexts(&mut tasks[id], c);
         bools[i] |= update_tags(&mut tasks[id], c);
+        bools[i] |= update_hashtags(&mut tasks[id], c);
     }
 
     bools

@@ -180,6 +180,16 @@ pub fn extract_tags(s: &str) -> HashMap<String, String> {
     hm
 }
 
+pub fn extract_hashtags(s: &str) -> Vec<String> {
+    let mut hashtags = Vec::new();
+    for word in s.split(' ') {
+        if word.starts_with('#') {
+            hashtags.push(word.trim_start_matches('#').to_string());
+        }
+    }
+    hashtags
+}
+
 /// Replaces a word with another one. If `new` is empty, it removed the old value.
 /// A word is a group of characters between spaces(start and end of the string are virtual spaces).
 pub fn replace_word(s: &mut String, old: &str, new: &str) {

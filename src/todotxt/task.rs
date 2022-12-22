@@ -17,6 +17,7 @@ pub struct Task {
     pub due_date: Option<NaiveDate>,
     pub threshold_date: Option<NaiveDate>,
     pub recurrence: Option<utils::Recurrence>,
+    pub hashtags: Vec<String>,
 }
 
 impl Default for Task {
@@ -33,6 +34,7 @@ impl Default for Task {
             due_date: None,
             threshold_date: None,
             recurrence: None,
+            hashtags: Vec::new(),
         }
     }
 }
@@ -146,6 +148,7 @@ impl Task {
             contexts: utils::extract_contexts(s),
             projects: utils::extract_projects(s),
             tags: utils::extract_tags(s),
+            hashtags: utils::extract_hashtags(s),
         };
         let mut s = s;
         if s.starts_with("x ") {

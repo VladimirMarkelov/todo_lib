@@ -241,3 +241,75 @@ fn tag_update_test() {
         assert_eq!(test.res, &t[0].subject, "\n{}. {} != {}", idx, t[0].subject, test.res);
     }
 }
+
+#[test]
+fn hashtags_test() {
+    struct Test {
+        subj: &'static str,
+        hashtags: Vec<&'static str>,
+        res: &'static str,
+        act: todo::Action,
+        changed: bool,
+    }
+    let data: Vec<Test> = vec![
+        Test {
+            subj: "test #about some #hashtags",
+            hashtags: vec!["about", "hashtags"],
+            res: "",
+            act: todo::Action::None,
+            changed: false,
+        },
+        Test {
+            subj: "test #about some #hashtags",
+            hashtags: vec!["about", "tags"],
+            res: "test some #hashtags",
+            act: todo::Action::Delete,
+            changed: true,
+        },
+        Test {
+            subj: "test #about some #hashtags",
+            hashtags: vec!["about", "tags"],
+            res: "test #about some #hashtags #tags",
+            act: todo::Action::Set,
+            changed: true,
+        },
+        Test {
+            subj: "test #about some #hashtags and #some",
+            hashtags: vec!["about:this", "hashtags:tags", "no:yes"],
+            res: "test #this some #tags and #some",
+            act: todo::Action::Replace,
+            changed: true,
+        },
+        Test {
+            subj: "test #about some #hashtags and #some",
+            hashtags: vec!["about:about"],
+            res: "test #about some #hashtags and #some",
+            act: todo::Action::Replace,
+            changed: false,
+        },
+    ];
+    let now = chrono::Local::now().date_naive();
+    for (idx, test) in data.iter().enumerate() {
+        let mut t = Vec::new();
+        t.push(todotxt::Task::parse(test.subj, now));
+
+        if let todo::Action::None = test.act {
+            for (i, h) in test.hashtags.iter().enumerate() {
+                assert_eq!(t[0].hashtags[i], h.to_string(), "{}. {:?} != {:?}", idx, test.hashtags, t[0].hashtags);
+            }
+            continue;
+        }
+
+        let mut c: todo::Conf = todo::Conf::default();
+        let mut hvec = Vec::new();
+        for h in test.hashtags.iter() {
+            hvec.push(h.to_string());
+        }
+        c.hashtags = Some(hvec);
+        c.hashtags_act = test.act;
+        let changed = todo::edit(&mut t, None, &c);
+        assert!(changed.len() > 0, "{}. {}", idx, t[0].subject);
+        assert_eq!(changed[0], test.changed, "{}. {}", idx, t[0].subject);
+        assert_eq!(test.res, &t[0].subject, "\n{}. {} != {}", idx, t[0].subject, test.res);
+    }
+}
