@@ -5,14 +5,17 @@ fn init_tasks() -> todo::TaskVec {
     let mut t = Vec::new();
     let now = chrono::Local::now().date_naive();
 
-    t.push(todotxt::Task::parse("call mother +family @parents", now));
+    t.push(todotxt::Task::parse("call mother #tagone +family @parents", now));
     t.push(todotxt::Task::parse(
         "x (C) 2018-10-05 2018-10-01 call to car service and schedule repair +car @repair",
         now,
     ));
-    t.push(todotxt::Task::parse("(B) 2018-10-15 repair family car +Car @repair due:2018-12-01 t:2019-01-02", now));
-    t.push(todotxt::Task::parse("(A) Kid's art school lesson +Family @Kids due:2018-11-10 rec:1w", now));
-    t.push(todotxt::Task::parse("take kid to hockey game +Family @kids due:2018-11-18", now));
+    t.push(todotxt::Task::parse(
+        "(B) 2018-10-15 repair #tagtwo family car +Car @repair due:2018-12-01 t:2019-01-02",
+        now,
+    ));
+    t.push(todotxt::Task::parse("(A) Kid's art #tagthree school lesson +Family @Kids due:2018-11-10 rec:1w", now));
+    t.push(todotxt::Task::parse("take kid to hockey #tagone #tagtwo game +Family @kids due:2018-11-18", now));
     t.push(todotxt::Task::parse("xmas vacations +FamilyHoliday due:2018-12-24", now));
 
     t
@@ -264,4 +267,34 @@ fn item_threshold() {
     let mut ids: todo::IDVec = vec![0, 1, 2, 3, 4, 5];
     tsort::sort(&mut ids, &t, &sconf);
     assert_eq!(ids, vec![2, 0, 1, 3, 4, 5]);
+}
+
+#[test]
+fn item_tags() {
+    let t = init_tasks();
+
+    struct Test {
+        inc: Vec<&'static str>,
+        exc: Vec<&'static str>,
+        res: todo::IDVec,
+    }
+    let tests: Vec<Test> = vec![
+        Test { inc: vec!["tagone"], exc: Vec::new(), res: vec![0, 4] },
+        Test { inc: vec!["tagone", "tagtwo"], exc: Vec::new(), res: vec![0, 2, 4] },
+        Test { inc: vec!["tagone"], exc: vec!["tagtwo"], res: vec![0] },
+        Test { inc: vec!["any"], exc: Vec::new(), res: vec![0, 2, 3, 4] },
+        Test { inc: vec!["none"], exc: Vec::new(), res: vec![5] },
+    ];
+
+    for (idx, test) in tests.iter().enumerate() {
+        let mut cflt = tfilter::Conf::default();
+        for tg in test.inc.iter() {
+            cflt.include.hashtags.push(tg.to_string());
+        }
+        for tg in test.exc.iter() {
+            cflt.exclude.hashtags.push(tg.to_string());
+        }
+        let ids = tfilter::filter(&t, &cflt);
+        assert_eq!(ids, test.res, "{}. {:?} != {:?}", idx, ids, test.res);
+    }
 }

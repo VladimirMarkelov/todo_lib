@@ -41,6 +41,7 @@ The function gets the list of all todos and filtering rules and returns the list
 * `projects` - selects all todos that have *any* of `projects`. This rule allows a caller to do very basic pattern matching: `*` added to the beginning or to the end of a project means to look for a project which name ends or starts respectively with the word, Adding `*` to both ends works like `regex` but checks only projects. `*` in the middle of the word does not have any special meaning - use `regex` in this case;
 * `contexts` - selects all todos that have *any* of `contexts`. The rule can use `*` in the same way `projects` does;
 * `tags` - selects all todos that have *any* of `tags`. The rule can use `*` in the same way `projects` does;
+* `hashtags` - selects all todos that have *any* of `hashtags`. The rule can use `*` in the same way `projects` does;
 * `due` - selects all todos with any due date, without due date, a todo with due date within range, or todos which are less than the number of days ahead;
 * `rec` - selects all recurrent todos or all without recurrent flag.
 * `thr` - selects all todos with any threshold date, without threshold date
@@ -48,7 +49,7 @@ The function gets the list of all todos and filtering rules and returns the list
 * `created` - selects all todos with any creation date, without creation date, a todo with creation date within range
 * `finished` - selects all todos with any finish date, without finish date, a todo with finish date within range
 
-Rules `contexts`, `projects`, and `tags` support special values:
+Rules `contexts`, `projects`, `hashtags`, and `tags` support special values:
 
 - `none` - filter todos that do not have any values (contexts=['none'] - todos without any context)
 - `any` - filter todos that have at least one value (project=['any'] - todos that belong to any project)
@@ -118,6 +119,7 @@ What can be modified:
 * `projects` - add, remove or replace
 * `contexts` - add, remove or replace
 * `tags` - add, remove or replace
+* `hashtags` - add, remove or replace
 
 #### Time tracking support
 

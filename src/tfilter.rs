@@ -149,6 +149,15 @@ pub struct TagFilter {
     /// * none - select todos with no tags
     /// * any - select todos that have at least one tag
     pub tags: Vec<String>,
+    /// List of all hashtags that a todo must include. The search
+    /// supports very limited pattern matching:
+    /// * `foo*` - finds all todos with hashtags that starts with `foo`
+    /// * `*foo` - finds all todos with hashtags that ends with `foo`
+    /// * `*foo*` - finds all todos with hashtags that contains `foo`
+    /// Special values:
+    /// * none - select todos with no hashtags
+    /// * any - select todos that have at least one tag
+    pub hashtags: Vec<String>,
 }
 
 /// A rules for todo list filtering. Setting a field to None or empty vector
@@ -192,8 +201,8 @@ impl Default for Conf {
     fn default() -> Conf {
         Conf {
             range: ItemRange::None,
-            include: TagFilter { projects: Vec::new(), contexts: Vec::new(), tags: Vec::new() },
-            exclude: TagFilter { projects: Vec::new(), contexts: Vec::new(), tags: Vec::new() },
+            include: TagFilter { projects: Vec::new(), contexts: Vec::new(), tags: Vec::new(), hashtags: Vec::new() },
+            exclude: TagFilter { projects: Vec::new(), contexts: Vec::new(), tags: Vec::new(), hashtags: Vec::new() },
             regex: None,
             use_regex: false,
 
@@ -322,6 +331,28 @@ fn filter_tag(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec 
             continue;
         }
         if c.include.tags.is_empty() || vec_match(&tag_list, &c.include.tags) {
+            new_v.push(idx);
+        }
+    }
+    new_v
+}
+
+fn filter_hashtag(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    if c.include.hashtags.is_empty() && c.exclude.hashtags.is_empty() {
+        return v;
+    }
+
+    let mut new_v: todo::IDVec = Vec::new();
+    for i in v.iter() {
+        let idx = *i;
+        let mut hashtag_list: Vec<String> = Vec::new();
+        for k in tasks[idx].hashtags.iter() {
+            hashtag_list.push(k.to_string());
+        }
+        if !c.exclude.hashtags.is_empty() && vec_match(&hashtag_list, &c.exclude.hashtags) {
+            continue;
+        }
+        if c.include.hashtags.is_empty() || vec_match(&hashtag_list, &c.include.hashtags) {
             new_v.push(idx);
         }
     }
@@ -574,6 +605,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
     }
     v = filter_regex(tasks, v, c);
     v = filter_tag(tasks, v, c);
+    v = filter_hashtag(tasks, v, c);
     v = filter_project(tasks, v, c);
     v = filter_context(tasks, v, c);
     v = filter_priority(tasks, v, c);
