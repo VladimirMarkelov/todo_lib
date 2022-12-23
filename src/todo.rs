@@ -584,15 +584,6 @@ fn update_tags(task: &mut todotxt::Task, c: &Conf) -> bool {
     changed
 }
 
-pub fn split_in_two_tags(s: &str) -> Option<(&str, &str)> {
-    let s = s.trim_end_matches(|c| c == ':' || c == ',');
-    if let Some(pos) = s.find(':') {
-        Some((&s[..pos], &s[pos + 1..]))
-    } else {
-        s.find(',').map(|pos| (&s[..pos], &s[pos + 1..]))
-    }
-}
-
 fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) -> bool {
     let old_subj = task.subject.clone();
     let mut new_subj = old_subj.clone();
@@ -615,7 +606,7 @@ fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) ->
             }
         }
         Action::Replace => {
-            if let Some((old, new)) = split_in_two_tags(hashtag) {
+            if let Some((old, new)) = todotxt::split_tag(hashtag) {
                 let old = old.trim_start_matches('#');
                 let old_str = old.to_string();
                 let new = new.trim_start_matches('#');
