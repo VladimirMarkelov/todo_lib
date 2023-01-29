@@ -71,7 +71,7 @@ pub fn stop_timer(task: &mut todotxt::Task) -> bool {
     }
 
     if let Some(spent) = calc_time_spent(task) {
-        let new_spent = format!("{}", spent);
+        let new_spent = format!("{spent}");
         task.update_tag_with_value(todo::SPENT_TAG, &new_spent);
         task.update_tag_with_value(todo::TIMER_TAG, todo::TIMER_OFF);
         return true;

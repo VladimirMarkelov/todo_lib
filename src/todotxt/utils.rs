@@ -67,15 +67,15 @@ pub fn split_tag(s: &str) -> Option<(&str, &str)> {
 /// A string must be a capital Latin letter enclosed in parentheses.
 pub fn parse_priority(s: &str) -> Result<u8, String> {
     if s.len() != 3 {
-        return Err(format!("invalid priority '{}'", s));
+        return Err(format!("invalid priority '{s}'"));
     }
     let trimmed = s.trim_matches(|c| c == ' ' || c == '(' || c == ')');
     if trimmed.len() != 1 {
-        return Err(format!("invalid priority '{}'", s));
+        return Err(format!("invalid priority '{s}'"));
     }
     let priority = trimmed.bytes().next().expect("impossible");
     if !(b'A'..=b'Z').contains(&priority) {
-        return Err(format!("invalid priority '{}'", s));
+        return Err(format!("invalid priority '{s}'"));
     }
     Ok(priority - b'A')
 }
@@ -97,7 +97,7 @@ pub fn parse_date(s: &str, base: NaiveDate) -> Result<NaiveDate, String> {
 
     if s.find('-').is_none() {
         match s.parse::<Recurrence>() {
-            Err(_) => return Err(format!("invalid date '{}'", s)),
+            Err(_) => return Err(format!("invalid date '{s}'")),
             Ok(rec) => return Ok(rec.next_date(base)),
         }
     }
@@ -105,21 +105,21 @@ pub fn parse_date(s: &str, base: NaiveDate) -> Result<NaiveDate, String> {
     let mut vals: Vec<u32> = Vec::new();
     for spl in trimmed.split('-') {
         match spl.parse::<u32>() {
-            Err(_) => return Err(format!("invalid date '{}'", s)),
+            Err(_) => return Err(format!("invalid date '{s}'")),
             Ok(n) => vals.push(n),
         }
     }
     if vals.len() != 3 {
-        return Err(format!("invalid date '{}'", s));
+        return Err(format!("invalid date '{s}'"));
     }
     if vals[0] == 0 {
-        return Err(format!("invalid year '{}'", s));
+        return Err(format!("invalid year '{s}'"));
     }
     if vals[1] == 0 || vals[1] > 12 {
-        return Err(format!("invalid month '{}'", s));
+        return Err(format!("invalid month '{s}'"));
     }
     if vals[2] == 0 || vals[2] > 31 {
-        return Err(format!("invalid day '{}'", s));
+        return Err(format!("invalid day '{s}'"));
     }
     let mx = days_in_month(vals[0] as i32, vals[1]);
     if vals[2] > mx {
@@ -136,11 +136,11 @@ pub fn format_date(date: NaiveDate) -> String {
 }
 
 pub fn extract_projects(s: &str) -> Vec<String> {
-    extract_anything(&format!(" {} ", s), " +")
+    extract_anything(&format!(" {s} "), " +")
 }
 
 pub fn extract_contexts(s: &str) -> Vec<String> {
-    extract_anything(&format!(" {} ", s), " @")
+    extract_anything(&format!(" {s} "), " @")
 }
 
 fn extract_anything(s: &str, start_from: &str) -> Vec<String> {
@@ -200,19 +200,19 @@ pub fn replace_word(s: &mut String, old: &str, new: &str) {
         s.replace_range(.., new);
         return;
     }
-    if s.starts_with(&format!("{} ", old)) {
+    if s.starts_with(&format!("{old} ")) {
         let l = if new.is_empty() { old.len() + 1 } else { old.len() };
-        println!("replacing {} in {} with {}", l, s, new);
+        println!("replacing {l} in {s} with {new}");
         s.replace_range(..l, new);
     }
-    if s.ends_with(&format!(" {}", old)) {
+    if s.ends_with(&format!(" {old}")) {
         let l = if new.is_empty() { old.len() + 1 } else { old.len() };
         s.replace_range(s.len() - l.., new);
     }
     if new.is_empty() {
-        *s = s.replace(&format!(" {} ", old), " ");
+        *s = s.replace(&format!(" {old} "), " ");
     } else {
-        *s = s.replace(&format!(" {} ", old), &format!(" {} ", new));
+        *s = s.replace(&format!(" {old} "), &format!(" {new} "));
     }
 }
 
@@ -258,14 +258,14 @@ impl Recurrence {
         } else if s.ends_with('y') {
             rec.period = Period::Year;
         } else {
-            return Err(format!("invalid recurrence '{}'", s));
+            return Err(format!("invalid recurrence '{s}'"));
         }
         if s.starts_with('+') {
             rec.strict = true;
         }
         let num = s[..s.len() - 1].parse::<u8>();
         match num {
-            Err(_) => Err(format!("invalid recurrence '{}'", s)),
+            Err(_) => Err(format!("invalid recurrence '{s}'")),
             Ok(n) => {
                 rec.count = n;
                 Ok(rec)

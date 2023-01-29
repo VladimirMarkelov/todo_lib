@@ -27,7 +27,7 @@ pub enum ItemRange {
 }
 
 /// Todo state range
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub enum TodoStatus {
     /// Only todos that are incompleted yet
     Active,
@@ -35,6 +35,8 @@ pub enum TodoStatus {
     All,
     /// Only todos marked `done`
     Done,
+    /// Only empty todos
+    Empty,
 }
 
 /// An arbitrary range of values for todo properties check. The range is inclusive
@@ -226,7 +228,7 @@ fn filter_regex(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
 
     let mut new_v: todo::IDVec = Vec::new();
     if c.use_regex {
-        let rx = match Regex::new(&format!("(?i){}", rx)) {
+        let rx = match Regex::new(&format!("(?i){rx}")) {
             Err(_) => {
                 println!("Invalid regex");
                 return v;
@@ -253,6 +255,21 @@ fn filter_regex(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
         if low.contains(&rstr) {
             new_v.push(idx);
             continue;
+        }
+    }
+    new_v
+}
+
+fn filter_empty(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    if c.all == TodoStatus::All {
+        return v;
+    }
+    let mut new_v: todo::IDVec = Vec::new();
+    for i in v.iter() {
+        let idx = *i;
+        let empty = tasks[idx].subject.is_empty();
+        if (empty && c.all == TodoStatus::Empty) || (!empty && c.all != TodoStatus::Empty) {
+            new_v.push(idx);
         }
     }
     new_v
@@ -603,6 +620,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
             }
         }
     }
+    v = filter_empty(tasks, v, c);
     v = filter_regex(tasks, v, c);
     v = filter_tag(tasks, v, c);
     v = filter_hashtag(tasks, v, c);

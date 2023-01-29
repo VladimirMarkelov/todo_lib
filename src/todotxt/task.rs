@@ -101,8 +101,8 @@ impl Task {
             if name == "t" {
                 if let Ok(dt) = utils::parse_date(value, base) {
                     self.threshold_date = Some(dt);
-                    let old_tag = format!("{}:{}", name, value);
-                    let new_tag = format!("{}:{}", name, utils::format_date(dt));
+                    let old_tag = format!("{name}:{value}");
+                    let new_tag = format!("{name}:{0}", utils::format_date(dt));
                     if old_tag != new_tag {
                         old_tags.push(old_tag);
                         new_tags.push(new_tag);
@@ -112,8 +112,8 @@ impl Task {
             if name == "due" {
                 if let Ok(dt) = utils::parse_date(value, base) {
                     self.due_date = Some(dt);
-                    let old_tag = format!("{}:{}", name, value);
-                    let new_tag = format!("{}:{}", name, utils::format_date(dt));
+                    let old_tag = format!("{name}:{value}");
+                    let new_tag = format!("{name}:{0}", utils::format_date(dt));
                     if old_tag != new_tag {
                         old_tags.push(old_tag);
                         new_tags.push(new_tag);
@@ -231,7 +231,7 @@ impl Task {
         if value.is_empty() {
             let old = self.tags.remove(tag);
             if let Some(v) = old {
-                let old_tag = format!("{}:{}", tag, v);
+                let old_tag = format!("{tag}:{v}");
                 self.replace_tag(&old_tag, value);
                 self.update_field(tag, value);
                 return true;
@@ -241,15 +241,15 @@ impl Task {
         #[allow(clippy::format_push_string)]
         match self.tags.get(tag) {
             None => {
-                self.subject += &format!(" {}:{}", tag, value);
+                self.subject += &format!(" {tag}:{value}");
                 self.tags.insert(tag.to_string(), value.to_string());
                 self.update_field(tag, value);
                 true
             }
             Some(v) => {
                 if v != value {
-                    let old_tag = format!("{}:{}", tag, v);
-                    let new_tag = format!("{}:{}", tag, value);
+                    let old_tag = format!("{tag}:{v}");
+                    let new_tag = format!("{tag}:{value}");
                     self.replace_tag(&old_tag, &new_tag);
                     self.update_field(tag, value);
                     true
@@ -375,9 +375,9 @@ impl Task {
         self.projects.retain(|proj| proj != old);
         if !new.is_empty() {
             self.projects.push(new.to_string());
-            utils::replace_word(&mut self.subject, &format!("+{}", old), &format!("+{}", new));
+            utils::replace_word(&mut self.subject, &format!("+{old}"), &format!("+{new}"));
         } else {
-            utils::replace_word(&mut self.subject, &format!("+{}", old), "");
+            utils::replace_word(&mut self.subject, &format!("+{old}"), "");
         }
     }
 
@@ -398,9 +398,9 @@ impl Task {
         self.contexts.retain(|proj| proj != old);
         if !new.is_empty() {
             self.contexts.push(new.to_string());
-            utils::replace_word(&mut self.subject, &format!("@{}", old), &format!("@{}", new));
+            utils::replace_word(&mut self.subject, &format!("@{old}"), &format!("@{new}"));
         } else {
-            utils::replace_word(&mut self.subject, &format!("@{}", old), "");
+            utils::replace_word(&mut self.subject, &format!("@{old}"), "");
         }
     }
 }

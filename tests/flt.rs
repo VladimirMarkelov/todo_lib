@@ -1,4 +1,5 @@
 use chrono;
+use todo_lib::tfilter::TodoStatus;
 use todo_lib::{tfilter, todo, todotxt, tsort};
 
 fn init_tasks() -> todo::TaskVec {
@@ -18,6 +19,17 @@ fn init_tasks() -> todo::TaskVec {
     t.push(todotxt::Task::parse("take kid to hockey #tagone #tagtwo game +Family @kids due:2018-11-18", now));
     t.push(todotxt::Task::parse("xmas vacations +FamilyHoliday due:2018-12-24", now));
 
+    t
+}
+
+fn init_tasks_with_empty() -> todo::TaskVec {
+    let mut t = Vec::new();
+    let now = chrono::Local::now().date_naive();
+
+    t.push(todotxt::Task::parse("call mother #tagone +family @parents", now));
+    t.push(todotxt::Task::parse("", now));
+    t.push(todotxt::Task::parse("xmas vacations +FamilyHoliday due:2018-12-24", now));
+    t.push(todotxt::Task::parse("", now));
     t
 }
 
@@ -296,5 +308,25 @@ fn item_tags() {
         }
         let ids = tfilter::filter(&t, &cflt);
         assert_eq!(ids, test.res, "{}. {:?} != {:?}", idx, ids, test.res);
+    }
+}
+
+#[test]
+fn empty_tasks() {
+    let t = init_tasks_with_empty();
+    struct Test {
+        inc: TodoStatus,
+        res: todo::IDVec,
+    }
+    let tests: Vec<Test> = vec![
+        Test { inc: TodoStatus::Active, res: vec![0, 2] },
+        Test { inc: TodoStatus::Empty, res: vec![1, 3] },
+        Test { inc: TodoStatus::All, res: vec![0, 1, 2, 3] },
+    ];
+    for (idx, test) in tests.iter().enumerate() {
+        let mut cflt = tfilter::Conf::default();
+        cflt.all = test.inc;
+        let ids = tfilter::filter(&t, &cflt);
+        assert_eq!(ids, test.res, "{idx}. {ids:?} != {:?}", test.res);
     }
 }

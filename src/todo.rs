@@ -195,8 +195,8 @@ pub fn save(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError> {
 
     let mut output = File::create(&tmpname).map_err(|_| terr::TodoError::SaveFailed)?;
     for t in tasks {
-        let line = format!("{}\n", t);
-        write!(output, "{}", line).map_err(|_| terr::TodoError::FileWriteFailed)?;
+        let line = format!("{t}\n");
+        write!(output, "{line}").map_err(|_| terr::TodoError::FileWriteFailed)?;
     }
 
     fs::rename(tmpname, filename).map_err(|e| terr::TodoError::IOError(e.to_string()))?;
@@ -218,8 +218,8 @@ pub fn archive(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError
         .map_err(|_| terr::TodoError::AppendFailed)?;
 
     for t in tasks {
-        let line = format!("{}\n", t);
-        write!(output, "{}", line).map_err(|_| terr::TodoError::FileWriteFailed)?;
+        let line = format!("{t}\n");
+        write!(output, "{line}").map_err(|_| terr::TodoError::FileWriteFailed)?;
     }
 
     Ok(())
@@ -470,7 +470,7 @@ fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
         Action::Set => {
             if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence) {
                 if let Some(nr) = &c.recurrence {
-                    let new_rec = format!("{}", nr);
+                    let new_rec = format!("{nr}");
                     let updated = task.update_tag(&new_rec);
                     if updated && task.finished {
                         task.uncomplete();
@@ -588,7 +588,7 @@ fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) ->
     let old_subj = task.subject.clone();
     let mut new_subj = old_subj.clone();
     let hashtag = hashtag.trim_start_matches('#');
-    let hashtag_full = format!("#{}", hashtag);
+    let hashtag_full = format!("#{hashtag}");
     match act {
         Action::Delete => {
             task.hashtags.retain(|h| h != hashtag);
@@ -613,8 +613,8 @@ fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) ->
                 if old != new && task.hashtags.contains(&old.to_string()) {
                     task.hashtags.retain(|h| h != &old_str);
                     task.hashtags.push(new.to_string());
-                    let old = format!("#{}", old);
-                    let new = format!("#{}", new);
+                    let old = format!("#{old}");
+                    let new = format!("#{new}");
                     todotxt::replace_word(&mut new_subj, &old, &new);
                     task.subject = new_subj;
                     return true;

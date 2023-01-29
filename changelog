@@ -1,3 +1,6 @@
+2023-01-29 - version 6.1.0
+[+] Empty todos are skipped by default. To show them, use `--all` flag
+
 2022-12-21 - version 6.0.0
 [+] Add API to edit any tag in the subject. Standard tags are ignored
     by the new API, use the existing specific functions to change due
