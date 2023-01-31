@@ -1,3 +1,6 @@
+2023-01-31 - version 6.1.1
+[+] Fix building using 32-bit compilers
+
 2023-01-29 - version 6.1.0
 [+] Empty todos are skipped by default. To show them, use `--all` flag
 

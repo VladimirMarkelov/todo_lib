@@ -15,7 +15,7 @@ use crate::todotxt;
 use crate::tsort;
 
 /// The ID value returned instead of new todo ID if adding a new todo fails
-pub const INVALID_ID: usize = 9_999_999_999;
+pub const INVALID_ID: usize = 1_999_999_999;
 pub const TIMER_TAG: &str = "tmr";
 pub const SPENT_TAG: &str = "spent";
 pub const TIMER_OFF: &str = "off";
