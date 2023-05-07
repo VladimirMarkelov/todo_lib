@@ -229,8 +229,8 @@ fn filter_regex(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
     let mut new_v: todo::IDVec = Vec::new();
     if c.use_regex {
         let rx = match Regex::new(&format!("(?i){rx}")) {
-            Err(_) => {
-                println!("Invalid regex");
+            Err(e) => {
+                eprintln!("Invalid regex: {}", e);
                 return v;
             }
             Ok(v) => v,

@@ -1,3 +1,6 @@
+2023-05-07 - version 6.1.2
+[+] Remove a few debug println calls
+
 2023-01-31 - version 6.1.1
 [+] Fix building using 32-bit compilers
 

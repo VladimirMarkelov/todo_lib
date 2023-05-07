@@ -77,7 +77,7 @@ fn try_read_date(s: &str, base: NaiveDate) -> Option<NaiveDate> {
         None => return None,
         Some(ch) => ch,
     };
-    if ('0'..='9').contains(&c) {
+    if c.is_ascii_digit() {
         let dt = next_word(s);
         match utils::parse_date(dt, base) {
             Err(_) => None,
@@ -124,7 +124,6 @@ impl Task {
 
         for (old, new) in old_tags.iter().zip(new_tags.iter()) {
             self.replace_tag(old, new);
-            println!("after replacing [{}] with [{}]: [{}]", old, new, self.subject);
         }
     }
 

@@ -74,7 +74,7 @@ pub fn parse_priority(s: &str) -> Result<u8, String> {
         return Err(format!("invalid priority '{s}'"));
     }
     let priority = trimmed.bytes().next().expect("impossible");
-    if !(b'A'..=b'Z').contains(&priority) {
+    if !priority.is_ascii_uppercase() {
         return Err(format!("invalid priority '{s}'"));
     }
     Ok(priority - b'A')
@@ -202,7 +202,6 @@ pub fn replace_word(s: &mut String, old: &str, new: &str) {
     }
     if s.starts_with(&format!("{old} ")) {
         let l = if new.is_empty() { old.len() + 1 } else { old.len() };
-        println!("replacing {l} in {s} with {new}");
         s.replace_range(..l, new);
     }
     if s.ends_with(&format!(" {old}")) {
