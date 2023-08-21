@@ -1,3 +1,9 @@
+2023-08-21 - version 6.1.3
+[*] Fix filtering any date field by a range when one end of the range is
+    'none'. The bug resulted in that, e.g., '--due none' and
+	'--due today..none' displayed the same output which included only tasks
+	that do not have due date set
+
 2023-05-07 - version 6.1.2
 [+] Remove a few debug println calls
 

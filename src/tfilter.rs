@@ -531,7 +531,12 @@ fn date_in_range(date: &Option<chrono::NaiveDate>, range: &DateRange) -> bool {
         ValueSpan::Range => {
             if let Some(d) = date {
                 let diff = *d - today;
-                diff.num_days() >= range.days.low && diff.num_days() <= range.days.high
+                match (range.days.low, range.days.high) {
+                    (INCLUDE_NONE, INCLUDE_NONE) => false,
+                    (INCLUDE_NONE, d) => diff.num_days() <= d,
+                    (d, INCLUDE_NONE) => diff.num_days() >= d,
+                    (b, e) => diff.num_days() >= b && diff.num_days() <= e,
+                }
             } else {
                 range.days.low == INCLUDE_NONE || range.days.high == INCLUDE_NONE
             }
