@@ -4,6 +4,24 @@ use chrono::{Local, NaiveDate};
 
 use crate::todotxt::utils;
 
+const PRIORITY_TAG: &str = "pri";
+
+/// What to do with priority on task completion.
+/// For case `RemovePriority` it is impossible to restore the original
+/// priority when taks is undone
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub enum CompletionMode {
+    /// Prepend 'x' when completed and keep priority
+    JustMark,
+    /// Move priority after completion date, if the task has completion date.
+    /// It removed the priority from the output by making it a part of subject
+    MovePriority,
+    /// Erase priority - do not keep priority for completed tasks
+    RemovePriority,
+    /// Set priority `(A)` to None, but create a tag `pri:A`
+    PriorityToTag,
+}
+
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Task {
     pub subject: String,
@@ -294,13 +312,30 @@ impl Task {
 
     /// Mark the task completed.
     /// Returns true if the task was changed(e.g., for a completed task the function return false).
-    pub fn complete(&mut self, date: NaiveDate) -> bool {
+    pub fn complete(&mut self, date: NaiveDate, cmpl: CompletionMode) -> bool {
         if self.finished {
             return false;
         }
         self.finished = true;
         if self.create_date.is_some() {
             self.finish_date = Some(date);
+        }
+        match cmpl {
+            CompletionMode::RemovePriority => {
+                self.priority = utils::NO_PRIORITY;
+            }
+            CompletionMode::PriorityToTag if self.priority < utils::NO_PRIORITY => {
+                self.tags.insert(PRIORITY_TAG.to_string(), format!("{0}", utils::priority_to_char(self.priority)));
+                self.subject =
+                    format!("{0} {1}:{2}", self.subject, PRIORITY_TAG, utils::priority_to_char(self.priority));
+                self.priority = utils::NO_PRIORITY;
+            }
+            CompletionMode::MovePriority if self.priority < utils::NO_PRIORITY && self.finish_date.is_some() => {
+                let pri = format!("{0} ", &utils::format_priority(self.priority));
+                self.subject.insert_str(0, &pri);
+                self.priority = utils::NO_PRIORITY;
+            }
+            _ => {}
         }
         true
     }
@@ -348,9 +383,36 @@ impl Task {
 
     /// Remove completion mark from the task.
     /// Returns true if the task was changed(e.g., for a incomplete task the function return false).
-    pub fn uncomplete(&mut self) -> bool {
+    pub fn uncomplete(&mut self, cmpl: CompletionMode) -> bool {
         if !self.finished {
             return false;
+        }
+        match cmpl {
+            CompletionMode::PriorityToTag => {
+                let pri = if let Some(pri_s) = self.tags.get(PRIORITY_TAG) {
+                    utils::str_to_priority(pri_s)
+                } else {
+                    utils::NO_PRIORITY
+                };
+                if pri != utils::NO_PRIORITY {
+                    self.priority = pri;
+                    self.tags.remove(PRIORITY_TAG);
+                    utils::replace_word(
+                        &mut self.subject,
+                        &format!("{0}:{1}", PRIORITY_TAG, utils::priority_to_char(pri)),
+                        "",
+                    );
+                }
+            }
+            CompletionMode::MovePriority => {
+                // Check if the subject starts with `(?)`
+                let pri_s = if let Some(idx) = self.subject.find(' ') { &self.subject[..idx] } else { &self.subject };
+                if let Ok(p) = utils::parse_priority(pri_s) {
+                    self.priority = p;
+                    self.subject = self.subject[pri_s.len()..].trim_start().to_string();
+                }
+            }
+            _ => {}
         }
         self.finished = false;
         self.finish_date = None;

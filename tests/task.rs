@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use todo_lib::todotxt::Task;
+use todo_lib::todotxt::{CompletionMode, Task};
 
 #[test]
 fn parse_tasks_simple() {
@@ -146,24 +146,69 @@ fn complete_uncomplete() {
         i: &'static str,
         d: &'static str,
         u: &'static str,
+        m: CompletionMode,
     }
     let data: Vec<Test> = vec![
-        Test { i: "test", d: "x test", u: "test" },
-        Test { i: "2020-01-01 test", d: "x 2020-02-02 2020-01-01 test", u: "2020-01-01 test" },
-        Test { i: "test rec:+1m due:2020-03-01", d: "x test rec:+1m due:2020-03-01", u: "test rec:+1m due:2020-03-01" },
-        Test { i: "test rec:1m due:2020-03-01", d: "x test rec:1m due:2020-03-01", u: "test rec:1m due:2020-03-01" },
-        Test { i: "2020-01-01 test rec:7d", d: "x 2020-02-02 2020-01-01 test rec:7d", u: "2020-01-01 test rec:7d" },
+        Test { i: "test", d: "x test", u: "test", m: CompletionMode::JustMark },
+        Test {
+            i: "2020-01-01 test",
+            d: "x 2020-02-02 2020-01-01 test",
+            u: "2020-01-01 test",
+            m: CompletionMode::JustMark,
+        },
+        Test {
+            i: "test rec:+1m due:2020-03-01",
+            d: "x test rec:+1m due:2020-03-01",
+            u: "test rec:+1m due:2020-03-01",
+            m: CompletionMode::JustMark,
+        },
+        Test {
+            i: "test rec:1m due:2020-03-01",
+            d: "x test rec:1m due:2020-03-01",
+            u: "test rec:1m due:2020-03-01",
+            m: CompletionMode::JustMark,
+        },
+        Test {
+            i: "2020-01-01 test rec:7d",
+            d: "x 2020-02-02 2020-01-01 test rec:7d",
+            u: "2020-01-01 test rec:7d",
+            m: CompletionMode::JustMark,
+        },
+        Test { i: "(B) testb", d: "x (B) testb", u: "(B) testb", m: CompletionMode::JustMark },
+        Test { i: "(B) testb", d: "x (B) testb", u: "(B) testb", m: CompletionMode::MovePriority },
+        Test { i: "(B) testb", d: "x testb pri:B", u: "(B) testb", m: CompletionMode::PriorityToTag },
+        Test { i: "(B) testb", d: "x testb", u: "testb", m: CompletionMode::RemovePriority },
+        Test {
+            i: "(B) 2020-01-01 testc",
+            d: "x 2020-02-02 2020-01-01 (B) testc",
+            u: "(B) 2020-01-01 testc",
+            m: CompletionMode::MovePriority,
+        },
+        Test {
+            i: "(B) 2020-01-01 testc",
+            d: "x 2020-02-02 2020-01-01 testc pri:B",
+            u: "(B) 2020-01-01 testc",
+            m: CompletionMode::PriorityToTag,
+        },
+        Test {
+            i: "(B) 2020-01-01 testc",
+            d: "x 2020-02-02 2020-01-01 testc",
+            u: "2020-01-01 testc",
+            m: CompletionMode::RemovePriority,
+        },
     ];
     let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, base);
-        t.complete(base);
-        assert_eq!(d.d, &format!("{}", t), "done {}", d.i);
+        t.complete(base, d.m);
+        assert_eq!(d.d, &format!("{}", t), "done '{}', mode: {:?}", d.i, d.m);
         if t.create_date.is_some() && t.recurrence.is_none() {
             assert_eq!(t.finish_date, Some(base));
         }
-        t.uncomplete();
-        assert_eq!(d.u, &format!("{}", t), "undone {}", d.i);
+        if d.m != CompletionMode::RemovePriority {
+            t.uncomplete(d.m);
+            assert_eq!(d.u, &format!("{}", t), "undone '{}', mode: {:?}", d.i, d.m);
+        }
     }
 }
 

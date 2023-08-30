@@ -119,6 +119,8 @@ pub struct Conf {
     /// Type of operation applied to old hashtags.
     /// Only 'Set', 'Delete', and 'Replace' are supported.
     pub hashtags_act: Action,
+    /// Rule to update priority when a task is done or undone
+    pub completion_mode: todotxt::CompletionMode,
 }
 
 impl Default for Conf {
@@ -143,6 +145,7 @@ impl Default for Conf {
             tags_act: Action::None,
             hashtags: None,
             hashtags_act: Action::None,
+            completion_mode: todotxt::CompletionMode::JustMark,
         }
     }
 }
@@ -287,7 +290,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
         if c.done {
             bools[i] = timer::stop_timer(&mut tasks[*idx]);
             let mut next_task = (tasks[*idx]).clone();
-            let completed = tasks[*idx].complete(now);
+            let completed = tasks[*idx].complete(now, c.completion_mode);
             if completed
                 && next_task.recurrence.is_some()
                 && (next_task.due_date.is_some() || next_task.threshold_date.is_some())
@@ -300,7 +303,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
             }
             bools[i] = bools[i] || completed;
         } else {
-            bools[i] = tasks[*idx].uncomplete();
+            bools[i] = tasks[*idx].uncomplete(c.completion_mode);
         }
     }
 
@@ -473,7 +476,7 @@ fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
                     let new_rec = format!("{nr}");
                     let updated = task.update_tag(&new_rec);
                     if updated && task.finished {
-                        task.uncomplete();
+                        task.uncomplete(c.completion_mode);
                     }
                     return updated;
                 }

@@ -80,11 +80,38 @@ pub fn parse_priority(s: &str) -> Result<u8, String> {
     Ok(priority - b'A')
 }
 
+pub fn str_to_priority(s: &str) -> u8 {
+    if s.len() > 1 {
+        return NO_PRIORITY;
+    }
+    if let Some(c) = s.chars().next() {
+        char_to_priority(c)
+    } else {
+        NO_PRIORITY
+    }
+}
+
+pub fn char_to_priority(c: char) -> u8 {
+    if c.is_ascii_uppercase() {
+        c as u8 - b'A'
+    } else {
+        NO_PRIORITY
+    }
+}
+
+pub fn priority_to_char(priority: u8) -> char {
+    if priority >= NO_PRIORITY {
+        ' '
+    } else {
+        (b'A' + priority) as char
+    }
+}
+
 pub fn format_priority(priority: u8) -> String {
     if priority >= NO_PRIORITY {
         String::new()
     } else {
-        format!("({})", (b'A' + priority) as char)
+        format!("({})", priority_to_char(priority))
     }
 }
 
