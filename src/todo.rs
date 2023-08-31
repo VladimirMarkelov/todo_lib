@@ -322,13 +322,14 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be completed. If it is `None`
 ///     the entire task list is marked completed
+/// * `completion_mode` = what to do with a priority on completion (see todotxt::CompletionMode)
 ///
 /// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
-    let c = Conf { done: true, ..Default::default() };
+pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec {
+    let c = Conf { done: true, completion_mode: mode, ..Default::default() };
     done_undone(tasks, ids, &c)
 }
 
@@ -337,13 +338,14 @@ pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be undone. If it is `None`
 ///     the entire task list is marked undone.
+/// * `completion_mode` = what to do with a priority on completion (see todotxt::CompletionMode)
 ///
 /// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn undone(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
-    let c = Conf { done: false, ..Default::default() };
+pub fn undone(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec {
+    let c = Conf { done: false, completion_mode: mode, ..Default::default() };
     done_undone(tasks, ids, &c)
 }
 

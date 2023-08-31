@@ -88,7 +88,7 @@ Functions of this category gets a list of all todos, list of todo IDs that shoul
 
 ##### Mark a todo completed
 
-`done(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec`
+`done(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec`
 
 Makes all todos from `ids` list that are incomplete completed.
 
@@ -97,7 +97,7 @@ They are marked completed, and a new todos are created with their due and thresh
 
 ##### Remove completion mark from a todo
 
-`undone(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec`
+`undone(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec`
 
 Removes completion mark from all todos from `ids` list that are done.
 

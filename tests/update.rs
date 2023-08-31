@@ -78,7 +78,7 @@ fn done() {
     }
 
     let old_date = t[3].due_date;
-    let changed = todo::done(&mut t, Some(&ids));
+    let changed = todo::done(&mut t, Some(&ids), todotxt::CompletionMode::JustMark);
     assert_eq!(changed, vec![true, false, true, true, false]);
     assert!(!t[2].finished);
     assert!(t[3].due_date == old_date);
@@ -96,13 +96,13 @@ fn undone() {
     let mut t = init_tasks();
 
     let ids: todo::IDVec = vec![0, 2, 3];
-    let changed = todo::undone(&mut t, Some(&ids));
+    let changed = todo::undone(&mut t, Some(&ids), todotxt::CompletionMode::JustMark);
     assert_eq!(changed, vec![false, false, false]);
     assert!(t[1].finished);
     assert!(!t[0].finished && !t[3].finished && !t[3].finished);
 
     let ids: todo::IDVec = vec![0, 1, 3, 4, 10];
-    let changed = todo::undone(&mut t, Some(&ids));
+    let changed = todo::undone(&mut t, Some(&ids), todotxt::CompletionMode::JustMark);
     assert_eq!(changed, vec![false, true, false, false, false]);
     assert!(!t[1].finished);
     assert!(!t[0].finished && !t[3].finished && !t[4].finished);

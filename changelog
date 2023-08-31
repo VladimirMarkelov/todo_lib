@@ -1,3 +1,7 @@
+2023-08-31 - version 7.0.1
+[*] It was not possible to use custom CompletionMode when call `done` and
+    `undone` in todo.rs
+
 2023-08-30 - version 7.0.0
 [!] Improve compatibility with todotxt rules:
 	Now task `complete` and `uncomplete` require an extra argument `CompletionMode`.
