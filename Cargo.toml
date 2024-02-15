@@ -2,7 +2,7 @@
 name = "todo_lib"
 version = "7.1.0"
 authors = ["Vladimir Markelov <vmatroskin@gmail.com>"]
-edition = "2018"
+edition = "2021"
 keywords = ["todotxt"]
 license = "MIT"
 description = "Collection of utilities for todo.txt format"
