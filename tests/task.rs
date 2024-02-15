@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use todo_lib::todotxt::{CompletionMode, Task};
+use todo_lib::todotxt::{business_days_between, CompletionMode, Task};
 
 #[test]
 fn parse_tasks_simple() {
@@ -213,6 +213,41 @@ fn complete_uncomplete() {
 }
 
 #[test]
+fn business_days_between_test() {
+    struct Test {
+        s: NaiveDate,
+        e: NaiveDate,
+        d: i64,
+    }
+    let data: Vec<Test> = vec![
+        Test {
+            s: NaiveDate::from_ymd_opt(2024, 2, 14).unwrap(),
+            e: NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
+            d: 0,
+        },
+        Test {
+            s: NaiveDate::from_ymd_opt(2024, 2, 14).unwrap(),
+            e: NaiveDate::from_ymd_opt(2024, 2, 21).unwrap(),
+            d: 2,
+        },
+        Test {
+            s: NaiveDate::from_ymd_opt(2024, 2, 14).unwrap(),
+            e: NaiveDate::from_ymd_opt(2024, 2, 24).unwrap(),
+            d: 4,
+        },
+        Test {
+            s: NaiveDate::from_ymd_opt(2024, 2, 24).unwrap(),
+            e: NaiveDate::from_ymd_opt(2024, 2, 24).unwrap(),
+            d: 2,
+        },
+    ];
+    for d in data.iter() {
+        let r = business_days_between(d.s, d.e);
+        assert_eq!(d.d, r, "done {} --> {}", d.s, d.e);
+    }
+}
+
+#[test]
 fn next_date() {
     struct Test {
         i: &'static str,
@@ -224,6 +259,11 @@ fn next_date() {
         Test { i: "test t:2020-02-29 rec:1m due:2020-03-01", d: "test t:2020-03-02 rec:1m due:2020-03-02" },
         Test { i: "2020-01-01 test rec:7d", d: "2020-01-01 test rec:7d" },
         Test { i: "2020-01-01 test due:2020-01-01", d: "2020-01-01 test due:2020-01-01" },
+        Test { i: "test rec:7d due:2020-02-01", d: "test rec:7d due:2020-02-09" },
+        Test { i: "test rec:1b due:2020-02-01", d: "test rec:1b due:2020-02-03" },
+        Test { i: "test rec:7b due:2020-02-01", d: "test rec:7b due:2020-02-11" },
+        Test { i: "test rec:14b due:2020-02-01", d: "test rec:14b due:2020-02-20" },
+        Test { i: "test rec:+14b due:2020-02-01", d: "test rec:+14b due:2020-02-20" },
     ];
     let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
     for d in data.iter() {

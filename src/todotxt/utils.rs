@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{Datelike, Duration, NaiveDate};
+use chrono::{Datelike, Duration, NaiveDate, Weekday};
 
 /// Empty priority - means a todo do not have any priority set
 pub const NO_PRIORITY: u8 = 26;
@@ -17,6 +17,7 @@ pub enum Period {
     Week,
     Month,
     Year,
+    BusinessDay,
 }
 
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
@@ -42,6 +43,30 @@ pub fn days_in_month(y: i32, m: u32) -> u32 {
         }
         _ => 30,
     }
+}
+
+// Returns the number of business days between two days.
+// The date range is inclusive.
+pub fn business_days_between(start: NaiveDate, end: NaiveDate) -> i64 {
+    if start > end {
+        return 0;
+    }
+    let day_diff = (end - start).num_days();
+    let full_weeks = day_diff / 7;
+    let mut wends = full_weeks * 2;
+    let mut start = start + Duration::days(full_weeks * 7);
+    while start <= end {
+        if start.weekday() == Weekday::Sat || start.weekday() == Weekday::Sun {
+            wends += 1;
+        }
+        start += Duration::days(1);
+    }
+    if wends == 0 {
+        return wends;
+    }
+    let s = end + Duration::days(1);
+    let e = end + Duration::days(wends);
+    wends + business_days_between(s, e)
 }
 
 /// Split tag into its name and value if possible.
@@ -267,6 +292,7 @@ impl std::fmt::Display for Recurrence {
             Period::Week => f.write_str("w"),
             Period::Month => f.write_str("m"),
             Period::Year => f.write_str("y"),
+            Period::BusinessDay => f.write_str("b"),
         }
     }
 }
@@ -283,6 +309,8 @@ impl Recurrence {
             rec.period = Period::Month;
         } else if s.ends_with('y') {
             rec.period = Period::Year;
+        } else if s.ends_with('b') {
+            rec.period = Period::BusinessDay;
         } else {
             return Err(format!("invalid recurrence '{s}'"));
         }
@@ -306,6 +334,12 @@ impl Recurrence {
         let last = base.day() == days_in_month(base.year(), base.month());
         match self.period {
             Period::Day => base + Duration::days(self.count as i64),
+            Period::BusinessDay => {
+                let st = base + Duration::days(1);
+                let end = base + Duration::days(self.count as i64);
+                let bd = business_days_between(st, end);
+                base + Duration::days(self.count as i64 + bd)
+            }
             Period::Week => base + Duration::weeks(self.count as i64),
             Period::Month => {
                 let mut y = base.year();

@@ -183,7 +183,7 @@ pub fn load(filename: &Path) -> Result<TaskVec, terr::TodoError> {
     let now = chrono::Local::now().date_naive();
 
     let br = BufReader::new(&file);
-    for l in br.lines().flatten() {
+    for l in br.lines().map_while(Result::ok) {
         let t = todotxt::Task::parse(&l, now);
         tasks.push(t);
     }
@@ -213,12 +213,8 @@ pub fn save(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError> {
 ///
 /// Returns true if all todos are saved successfully
 pub fn archive(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError> {
-    let mut output = OpenOptions::new()
-        .write(true)
-        .append(true)
-        .create(true)
-        .open(filename)
-        .map_err(|_| terr::TodoError::AppendFailed)?;
+    let mut output =
+        OpenOptions::new().append(true).create(true).open(filename).map_err(|_| terr::TodoError::AppendFailed)?;
 
     for t in tasks {
         let line = format!("{t}\n");
