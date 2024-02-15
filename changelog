@@ -1,3 +1,9 @@
+2024-02-14 - version 7.1.0
+[*] Introduce new recurrency range: business days. Use 'b' to define the
+    number of days in the 'rec' tag. Example: 'rec:7b'.
+	At this moment, it skips only Saturdays and Sundays when calculating
+	the next day.
+
 2023-08-31 - version 7.0.1
 [*] It was not possible to use custom CompletionMode when call `done` and
     `undone` in todo.rs
