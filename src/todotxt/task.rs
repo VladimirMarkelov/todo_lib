@@ -6,6 +6,24 @@ use crate::todotxt::utils;
 
 const PRIORITY_TAG: &str = "pri";
 
+/// Has options to manipulate how task information is handled when
+/// transitioning task's state to completed.
+pub struct CompletionConfig {
+    /// What to do with priority on task completion.
+    pub completion_mode: CompletionMode,
+    /// How to set completion date on task completion.
+    pub completion_date_mode: CompletionDateMode
+}
+
+impl Default for CompletionConfig {
+    fn default() -> Self {
+        Self {
+            completion_mode: CompletionMode::JustMark,
+            completion_date_mode: CompletionDateMode::WhenCreateDateIsPresent
+        }
+    }
+}
+
 /// What to do with priority on task completion.
 /// For case `RemovePriority` it is impossible to restore the original
 /// priority when taks is undone
@@ -20,6 +38,15 @@ pub enum CompletionMode {
     RemovePriority,
     /// Set priority `(A)` to None, but create a tag `pri:A`
     PriorityToTag,
+}
+
+/// How to set completion date on task completion.
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub enum CompletionDateMode {
+    /// Only add completion date if task has create date is specified.
+    WhenCreateDateIsPresent,
+    /// Always add completion date, regardless of whether or not create date is present
+    AlwaysSet
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -67,10 +94,8 @@ impl std::fmt::Display for Task {
             f.write_str(" ")?;
         }
         if let Some(dt) = self.finish_date {
-            if self.create_date.is_some() {
-                f.write_str(&utils::format_date(dt))?;
-                f.write_str(" ")?;
-            }
+            f.write_str(&utils::format_date(dt))?;
+            f.write_str(" ")?;
         }
         if let Some(dt) = self.create_date {
             f.write_str(&utils::format_date(dt))?;
@@ -312,15 +337,22 @@ impl Task {
 
     /// Mark the task completed.
     /// Returns true if the task was changed(e.g., for a completed task the function return false).
+    #[deprecated(note="Please use `complete_with_config` - it has more stable API")]
     pub fn complete(&mut self, date: NaiveDate, cmpl: CompletionMode) -> bool {
+        self.complete_with_config(date, CompletionConfig { completion_mode: cmpl, ..Default::default() })
+    }
+
+    /// Mark the task completed.
+    /// Returns true if the task was changed(e.g., for a completed task the function return false).
+    pub fn complete_with_config(&mut self, date: NaiveDate, cmpl_conf: CompletionConfig) -> bool {
         if self.finished {
             return false;
         }
         self.finished = true;
-        if self.create_date.is_some() {
+        if self.create_date.is_some() || cmpl_conf.completion_date_mode == CompletionDateMode::AlwaysSet {
             self.finish_date = Some(date);
         }
-        match cmpl {
+        match cmpl_conf.completion_mode {
             CompletionMode::RemovePriority => {
                 self.priority = utils::NO_PRIORITY;
             }
