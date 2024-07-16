@@ -12,14 +12,14 @@ pub struct CompletionConfig {
     /// What to do with priority on task completion.
     pub completion_mode: CompletionMode,
     /// How to set completion date on task completion.
-    pub completion_date_mode: CompletionDateMode
+    pub completion_date_mode: CompletionDateMode,
 }
 
 impl Default for CompletionConfig {
     fn default() -> Self {
         Self {
             completion_mode: CompletionMode::JustMark,
-            completion_date_mode: CompletionDateMode::WhenCreateDateIsPresent
+            completion_date_mode: CompletionDateMode::WhenCreationDateIsPresent,
         }
     }
 }
@@ -43,10 +43,10 @@ pub enum CompletionMode {
 /// How to set completion date on task completion.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum CompletionDateMode {
-    /// Only add completion date if task has create date is specified.
-    WhenCreateDateIsPresent,
-    /// Always add completion date, regardless of whether or not create date is present
-    AlwaysSet
+    /// Only add completion date if task has creation date
+    WhenCreationDateIsPresent,
+    /// Always add completion date, regardless of whether or not creation date is present
+    AlwaysSet,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -337,7 +337,7 @@ impl Task {
 
     /// Mark the task completed.
     /// Returns true if the task was changed(e.g., for a completed task the function return false).
-    #[deprecated(note="Please use `complete_with_config` - it has more stable API")]
+    #[deprecated(note = "Please use `complete_with_config` - it has more stable API")]
     pub fn complete(&mut self, date: NaiveDate, cmpl: CompletionMode) -> bool {
         self.complete_with_config(date, CompletionConfig { completion_mode: cmpl, ..Default::default() })
     }

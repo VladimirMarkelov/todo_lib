@@ -1,5 +1,8 @@
 use std::collections::HashMap;
-use todo_lib::{todo, todotxt::{self, CompletionConfig}};
+use todo_lib::{
+    todo,
+    todotxt::{self, CompletionConfig},
+};
 
 fn init_tasks() -> todo::TaskVec {
     let mut t = Vec::new();

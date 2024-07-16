@@ -220,7 +220,7 @@ fn complete_uncomplete() {
         d: &'static str,
         u: &'static str,
         m: CompletionMode,
-        cdm: CompletionDateMode
+        cdm: CompletionDateMode,
     }
     let data: Vec<Test> = vec![
         Test {
@@ -228,7 +228,7 @@ fn complete_uncomplete() {
             d: "x test",
             u: "test",
             m: CompletionMode::JustMark,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "test",
@@ -242,42 +242,42 @@ fn complete_uncomplete() {
             d: "x 2020-02-02 2020-01-01 test",
             u: "2020-01-01 test",
             m: CompletionMode::JustMark,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "test rec:+1m due:2020-03-01",
             d: "x test rec:+1m due:2020-03-01",
             u: "test rec:+1m due:2020-03-01",
             m: CompletionMode::JustMark,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "test rec:1m due:2020-03-01",
             d: "x test rec:1m due:2020-03-01",
             u: "test rec:1m due:2020-03-01",
             m: CompletionMode::JustMark,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "test rec:1m due:2020-03-01",
             d: "x test rec:1m due:2020-03-01",
             u: "test rec:1m due:2020-03-01",
             m: CompletionMode::JustMark,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "2020-01-01 test rec:7d",
             d: "x 2020-02-02 2020-01-01 test rec:7d",
             u: "2020-01-01 test rec:7d",
             m: CompletionMode::JustMark,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "(B) testb",
             d: "x (B) testb",
             u: "(B) testb",
             m: CompletionMode::JustMark,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "(B) testb",
@@ -291,7 +291,7 @@ fn complete_uncomplete() {
             d: "x (B) testb",
             u: "(B) testb",
             m: CompletionMode::MovePriority,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "(B) testb",
@@ -305,14 +305,14 @@ fn complete_uncomplete() {
             d: "x testb pri:B",
             u: "(B) testb",
             m: CompletionMode::PriorityToTag,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "(B) testb",
             d: "x testb",
             u: "testb",
             m: CompletionMode::RemovePriority,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "(B) testb",
@@ -326,30 +326,27 @@ fn complete_uncomplete() {
             d: "x 2020-02-02 2020-01-01 (B) testc",
             u: "(B) 2020-01-01 testc",
             m: CompletionMode::MovePriority,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "(B) 2020-01-01 testc",
             d: "x 2020-02-02 2020-01-01 testc pri:B",
             u: "(B) 2020-01-01 testc",
             m: CompletionMode::PriorityToTag,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
         Test {
             i: "(B) 2020-01-01 testc",
             d: "x 2020-02-02 2020-01-01 testc",
             u: "2020-01-01 testc",
             m: CompletionMode::RemovePriority,
-            cdm: CompletionDateMode::WhenCreateDateIsPresent,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
         },
     ];
     let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, base);
-        t.complete_with_config(base, CompletionConfig {
-            completion_mode: d.m,
-            completion_date_mode: d.cdm
-        });
+        t.complete_with_config(base, CompletionConfig { completion_mode: d.m, completion_date_mode: d.cdm });
         assert_eq!(d.d, &format!("{}", t), "done '{}', mode: {:?}", d.i, d.m);
         if t.create_date.is_some() && t.recurrence.is_none() {
             assert_eq!(t.finish_date, Some(base));
@@ -360,7 +357,6 @@ fn complete_uncomplete() {
         }
     }
 }
-
 
 #[test]
 fn business_days_between_test() {

@@ -149,7 +149,7 @@ impl Default for Conf {
             hashtags: None,
             hashtags_act: Action::None,
             completion_mode: todotxt::CompletionMode::JustMark,
-            completion_date_mode: todotxt::CompletionDateMode::WhenCreateDateIsPresent
+            completion_date_mode: todotxt::CompletionDateMode::WhenCreationDateIsPresent,
         }
     }
 }
@@ -290,10 +290,8 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
         if c.done {
             bools[i] = timer::stop_timer(&mut tasks[*idx]);
             let mut next_task = (tasks[*idx]).clone();
-            let completion_config = CompletionConfig {
-                completion_mode: c.completion_mode,
-                completion_date_mode: c.completion_date_mode
-            };
+            let completion_config =
+                CompletionConfig { completion_mode: c.completion_mode, completion_date_mode: c.completion_date_mode };
             let completed = tasks[*idx].complete_with_config(now, completion_config);
             if completed
                 && next_task.recurrence.is_some()
@@ -332,7 +330,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-#[deprecated(note="Use `done_with_config` instead, it has more stable api and more options")]
+#[deprecated(note = "Use `done_with_config` instead, it has more stable api and more options")]
 pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec {
     let c = Conf { done: true, completion_mode: mode, ..Default::default() };
     done_undone(tasks, ids, &c)
@@ -356,7 +354,11 @@ pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionM
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn done_with_config(tasks: &mut TaskVec, ids: Option<&IDVec>, completion_config: todotxt::CompletionConfig) -> ChangedVec {
+pub fn done_with_config(
+    tasks: &mut TaskVec,
+    ids: Option<&IDVec>,
+    completion_config: todotxt::CompletionConfig,
+) -> ChangedVec {
     let c = Conf {
         done: true,
         completion_mode: completion_config.completion_mode,
