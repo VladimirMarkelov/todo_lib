@@ -12,6 +12,7 @@ use std::path::Path;
 use crate::terr;
 use crate::timer;
 use crate::todotxt;
+use crate::todotxt::CompletionConfig;
 use crate::tsort;
 
 /// The ID value returned instead of new todo ID if adding a new todo fails
@@ -121,6 +122,8 @@ pub struct Conf {
     pub hashtags_act: Action,
     /// Rule to update priority when a task is done or undone
     pub completion_mode: todotxt::CompletionMode,
+    /// Rule to set a completion date when a task is done
+    pub completion_date_mode: todotxt::CompletionDateMode,
 }
 
 impl Default for Conf {
@@ -146,6 +149,7 @@ impl Default for Conf {
             hashtags: None,
             hashtags_act: Action::None,
             completion_mode: todotxt::CompletionMode::JustMark,
+            completion_date_mode: todotxt::CompletionDateMode::WhenCreationDateIsPresent,
         }
     }
 }
@@ -286,7 +290,9 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
         if c.done {
             bools[i] = timer::stop_timer(&mut tasks[*idx]);
             let mut next_task = (tasks[*idx]).clone();
-            let completed = tasks[*idx].complete(now, c.completion_mode);
+            let completion_config =
+                CompletionConfig { completion_mode: c.completion_mode, completion_date_mode: c.completion_date_mode };
+            let completed = tasks[*idx].complete_with_config(now, completion_config);
             if completed
                 && next_task.recurrence.is_some()
                 && (next_task.due_date.is_some() || next_task.threshold_date.is_some())
@@ -324,8 +330,41 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
+#[deprecated(note = "Use `done_with_config` instead, it has more stable api and more options")]
 pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec {
     let c = Conf { done: true, completion_mode: mode, ..Default::default() };
+    done_undone(tasks, ids, &c)
+}
+
+/// Marks todos completed.
+///
+/// It works differently for regular and recurrent ones.
+/// If a todo is a regular one and is not done yet, the function sets flag
+/// `done` and marks the todo as modified.
+/// If a todo is a recurrent one and any of due and threshold dates exist,
+/// the function marks the current task done and appends a new task with
+/// changed due and threshold dates (current values increased by recurrence value).
+///
+/// * `tasks` - the task list
+/// * `ids` - the list of todo IDs which should be completed. If it is `None`
+///     the entire task list is marked completed
+/// * `completion_config` = how additional fields are set during completion (see todotxt::CompletionConfig)
+///
+/// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
+/// The length of the result list equals either length of `ids`(if `ids` is
+/// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
+/// array means that corresponding item from `ids` or `tasks` was modified.
+pub fn done_with_config(
+    tasks: &mut TaskVec,
+    ids: Option<&IDVec>,
+    completion_config: todotxt::CompletionConfig,
+) -> ChangedVec {
+    let c = Conf {
+        done: true,
+        completion_mode: completion_config.completion_mode,
+        completion_date_mode: completion_config.completion_date_mode,
+        ..Default::default()
+    };
     done_undone(tasks, ids, &c)
 }
 

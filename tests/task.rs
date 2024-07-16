@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use todo_lib::todotxt::{business_days_between, CompletionMode, Task};
+use todo_lib::todotxt::{business_days_between, CompletionConfig, CompletionDateMode, CompletionMode, Task};
 
 #[test]
 fn parse_tasks_simple() {
@@ -141,7 +141,8 @@ fn parse_tasks_tags() {
 }
 
 #[test]
-fn complete_uncomplete() {
+#[allow(deprecated)]
+fn complete_old_signature() {
     struct Test {
         i: &'static str,
         d: &'static str,
@@ -201,6 +202,151 @@ fn complete_uncomplete() {
     for d in data.iter() {
         let mut t = Task::parse(d.i, base);
         t.complete(base, d.m);
+        assert_eq!(d.d, &format!("{}", t), "done '{}', mode: {:?}", d.i, d.m);
+        if t.create_date.is_some() && t.recurrence.is_none() {
+            assert_eq!(t.finish_date, Some(base));
+        }
+        if d.m != CompletionMode::RemovePriority {
+            t.uncomplete(d.m);
+            assert_eq!(d.u, &format!("{}", t), "undone '{}', mode: {:?}", d.i, d.m);
+        }
+    }
+}
+
+#[test]
+fn complete_uncomplete() {
+    struct Test {
+        i: &'static str,
+        d: &'static str,
+        u: &'static str,
+        m: CompletionMode,
+        cdm: CompletionDateMode,
+    }
+    let data: Vec<Test> = vec![
+        Test {
+            i: "test",
+            d: "x test",
+            u: "test",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "test",
+            d: "x 2020-02-02 test",
+            u: "test",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::AlwaysSet,
+        },
+        Test {
+            i: "2020-01-01 test",
+            d: "x 2020-02-02 2020-01-01 test",
+            u: "2020-01-01 test",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "test rec:+1m due:2020-03-01",
+            d: "x test rec:+1m due:2020-03-01",
+            u: "test rec:+1m due:2020-03-01",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "test rec:1m due:2020-03-01",
+            d: "x test rec:1m due:2020-03-01",
+            u: "test rec:1m due:2020-03-01",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "test rec:1m due:2020-03-01",
+            d: "x test rec:1m due:2020-03-01",
+            u: "test rec:1m due:2020-03-01",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "2020-01-01 test rec:7d",
+            d: "x 2020-02-02 2020-01-01 test rec:7d",
+            u: "2020-01-01 test rec:7d",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "(B) testb",
+            d: "x (B) testb",
+            u: "(B) testb",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "(B) testb",
+            d: "x (B) 2020-02-02 testb",
+            u: "(B) testb",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::AlwaysSet,
+        },
+        Test {
+            i: "(B) testb",
+            d: "x (B) testb",
+            u: "(B) testb",
+            m: CompletionMode::MovePriority,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "(B) testb",
+            d: "x 2020-02-02 (B) testb",
+            u: "(B) testb",
+            m: CompletionMode::MovePriority,
+            cdm: CompletionDateMode::AlwaysSet,
+        },
+        Test {
+            i: "(B) testb",
+            d: "x testb pri:B",
+            u: "(B) testb",
+            m: CompletionMode::PriorityToTag,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "(B) testb",
+            d: "x testb",
+            u: "testb",
+            m: CompletionMode::RemovePriority,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "(B) testb",
+            d: "x 2020-02-02 testb",
+            u: "testb",
+            m: CompletionMode::RemovePriority,
+            cdm: CompletionDateMode::AlwaysSet,
+        },
+        Test {
+            i: "(B) 2020-01-01 testc",
+            d: "x 2020-02-02 2020-01-01 (B) testc",
+            u: "(B) 2020-01-01 testc",
+            m: CompletionMode::MovePriority,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "(B) 2020-01-01 testc",
+            d: "x 2020-02-02 2020-01-01 testc pri:B",
+            u: "(B) 2020-01-01 testc",
+            m: CompletionMode::PriorityToTag,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "(B) 2020-01-01 testc",
+            d: "x 2020-02-02 2020-01-01 testc",
+            u: "2020-01-01 testc",
+            m: CompletionMode::RemovePriority,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+    ];
+    let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
+    for d in data.iter() {
+        let mut t = Task::parse(d.i, base);
+        t.complete_with_config(base, CompletionConfig { completion_mode: d.m, completion_date_mode: d.cdm });
         assert_eq!(d.d, &format!("{}", t), "done '{}', mode: {:?}", d.i, d.m);
         if t.create_date.is_some() && t.recurrence.is_none() {
             assert_eq!(t.finish_date, Some(base));
@@ -363,4 +509,27 @@ fn replace_recurrences() {
         t.update_tag_with_value("rec", d.w);
         assert_eq!(d.o, &t.subject, "{}-> {}", d.i, d.w);
     }
+}
+
+#[test]
+fn finish_date_with_create_date() {
+    let task = Task {
+        finished: true,
+        create_date: Some(NaiveDate::default()),
+        finish_date: NaiveDate::default().succ_opt(),
+        subject: "Feed cat".to_owned(),
+        ..Default::default()
+    };
+    assert_eq!(task.to_string(), "x 1970-01-02 1970-01-01 Feed cat")
+}
+
+#[test]
+fn finish_date_without_create_date() {
+    let task = Task {
+        finished: true,
+        finish_date: NaiveDate::default().succ_opt(),
+        subject: "Feed cat".to_owned(),
+        ..Default::default()
+    };
+    assert_eq!(task.to_string(), "x 1970-01-02 Feed cat")
 }
