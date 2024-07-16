@@ -177,7 +177,7 @@ pub struct Conf {
 
     /// Todos must contain the following values to be included in the list.
     pub include: TagFilter,
-    // Todos that include the following values are excluded from the list.
+    /// Todos that include the following values are excluded from the list.
     pub exclude: TagFilter,
 
     /// All incomplete, completed, or both types of todos
@@ -193,7 +193,7 @@ pub struct Conf {
     pub pri: Option<Priority>,
     /// Search for todos with timer related stuff: active, inactive, any time spent
     pub tmr: Option<Timer>,
-    /// Search for a creation date: any, no create date, or withing range
+    /// Search for a creation date: any, no creation date, or withing range
     pub created: Option<DateRange>,
     /// Search for a finished date: any, no finish date, or withing range
     pub finished: Option<DateRange>,

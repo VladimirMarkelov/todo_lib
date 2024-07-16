@@ -1,3 +1,8 @@
+2024-07-16 - version 7.2.0
+[*] Add new API to complete tasks. The new API allows setting completion date
+	regardless of creation date presence. The new is `done_with_config`. The
+	old API `done` is still available but marked deprecated.
+
 2024-02-14 - version 7.1.0
 [*] Introduce new recurrency range: business days. Use 'b' to define the
     number of days in the 'rec' tag. Example: 'rec:7b'.
