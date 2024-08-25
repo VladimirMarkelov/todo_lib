@@ -5,6 +5,7 @@ use chrono::{Local, NaiveDate};
 use crate::todotxt::utils;
 
 const PRIORITY_TAG: &str = "pri";
+const CLEANUP_CLONE_TAGS: [&str; 2] = ["tmr:", "spent:"];
 
 /// Has options to manipulate how task information is handled when
 /// transitioning task's state to completed.
@@ -247,6 +248,14 @@ impl Task {
         utils::replace_word(&mut self.subject, old_tag, new_tag);
         if let Some((n, v)) = utils::split_tag(new_tag) {
             self.tags.insert(n.to_string(), v.to_string());
+        }
+    }
+
+    /// Remove certain tags from a clone to avoid spoiling a new task with
+    /// old data. Tags to remove see in `CLEANUP_CLONE_TAGS`.
+    pub fn cleanup_cloned_task(&mut self) {
+        for tag in CLEANUP_CLONE_TAGS {
+            let _ = self.update_tag(tag);
         }
     }
 

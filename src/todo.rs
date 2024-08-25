@@ -301,6 +301,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
                     next_task.create_date = Some(now);
                 }
                 next_task.next_dates(now);
+                next_task.cleanup_cloned_task();
                 tasks.push(next_task);
             }
             bools[i] = bools[i] || completed;

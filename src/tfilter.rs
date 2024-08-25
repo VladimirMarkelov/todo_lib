@@ -129,6 +129,7 @@ pub struct TagFilter {
     /// * `foo*` - finds all todos with projects that starts with `foo`
     /// * `*foo` - finds all todos with projects that ends with `foo`
     /// * `*foo*` - finds all todos with projects that contains `foo`
+    ///
     /// Special values:
     /// * none - select todos with no contexts
     /// * any - select todos that have at least one context
@@ -138,6 +139,7 @@ pub struct TagFilter {
     /// * `foo*` - finds all todos with contexts that starts with `foo`
     /// * `*foo` - finds all todos with contexts that ends with `foo`
     /// * `*foo*` - finds all todos with contexts that contains `foo`
+    ///
     /// Special values:
     /// * none - select todos with no contexts
     /// * any - select todos that have at least one context
@@ -147,6 +149,7 @@ pub struct TagFilter {
     /// * `foo*` - finds all todos with tags that starts with `foo`
     /// * `*foo` - finds all todos with tags that ends with `foo`
     /// * `*foo*` - finds all todos with tags that contains `foo`
+    ///
     /// Special values:
     /// * none - select todos with no tags
     /// * any - select todos that have at least one tag
@@ -156,6 +159,7 @@ pub struct TagFilter {
     /// * `foo*` - finds all todos with hashtags that starts with `foo`
     /// * `*foo` - finds all todos with hashtags that ends with `foo`
     /// * `*foo*` - finds all todos with hashtags that contains `foo`
+    ///
     /// Special values:
     /// * none - select todos with no hashtags
     /// * any - select todos that have at least one tag

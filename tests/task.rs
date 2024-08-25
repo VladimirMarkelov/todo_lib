@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use todo_lib::todo::done;
 use todo_lib::todotxt::{business_days_between, CompletionConfig, CompletionDateMode, CompletionMode, Task};
 
 #[test]
@@ -355,6 +356,56 @@ fn complete_uncomplete() {
             t.uncomplete(d.m);
             assert_eq!(d.u, &format!("{}", t), "undone '{}', mode: {:?}", d.i, d.m);
         }
+    }
+}
+
+#[test]
+fn complete_cleanup_recurrent_test() {
+    struct Test {
+        i: &'static str,
+        n: &'static str,
+        m: CompletionMode,
+        cdm: CompletionDateMode,
+    }
+    let data: Vec<Test> = vec![
+        Test {
+            i: "test rec:1d due:2020-02-01 tmr:off one",
+            n: "test rec:1d one",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "test rec:1d due:2020-02-01 two spent:23",
+            n: "test rec:1d two",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+        Test {
+            i: "test rec:1d due:2020-02-01 spent:23 three tmr:on four",
+            n: "test rec:1d three four",
+            m: CompletionMode::JustMark,
+            cdm: CompletionDateMode::WhenCreationDateIsPresent,
+        },
+    ];
+
+    let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
+    for d in data.iter() {
+        let mut t = Task::parse(d.i, base);
+        let mut tasks: Vec<Task> = vec![t];
+        let changed = done(&mut tasks, None, d.m);
+
+        assert_eq!(changed.len(), 1, "Expected 1 changed tasks, got {0}", changed.len());
+        println!("{:?}", tasks);
+        assert_eq!(tasks.len(), 2, "Expected new task is created");
+        let mut new_cleaned = tasks[1].clone();
+        new_cleaned.update_tag("due:");
+        assert_eq!(
+            d.n,
+            &format!("{}", new_cleaned),
+            "Invalid new task [{0}], expected [{1}]",
+            &format!("{}", new_cleaned),
+            d.n
+        );
     }
 }
 
