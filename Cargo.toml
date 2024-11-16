@@ -1,6 +1,6 @@
 [package]
 name = "todo_lib"
-version = "7.2.1"
+version = "7.2.2"
 authors = ["Vladimir Markelov <vmatroskin@gmail.com>"]
 edition = "2021"
 keywords = ["todotxt"]
@@ -12,4 +12,4 @@ repository = "https://github.com/VladimirMarkelov/todo_lib"
 [dependencies]
 regex = "1"
 chrono = "^0.4"
-thiserror = "1"
+thiserror = "2"
