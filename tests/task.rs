@@ -367,16 +367,8 @@ fn complete_cleanup_recurrent_test() {
         m: CompletionMode,
     }
     let data: Vec<Test> = vec![
-        Test {
-            i: "test rec:1d due:2020-02-01 tmr:off one",
-            n: "test rec:1d one",
-            m: CompletionMode::JustMark,
-        },
-        Test {
-            i: "test rec:1d due:2020-02-01 two spent:23",
-            n: "test rec:1d two",
-            m: CompletionMode::JustMark,
-        },
+        Test { i: "test rec:1d due:2020-02-01 tmr:off one", n: "test rec:1d one", m: CompletionMode::JustMark },
+        Test { i: "test rec:1d due:2020-02-01 two spent:23", n: "test rec:1d two", m: CompletionMode::JustMark },
         Test {
             i: "test rec:1d due:2020-02-01 spent:23 three tmr:on four",
             n: "test rec:1d three four",
