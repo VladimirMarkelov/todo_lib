@@ -261,7 +261,7 @@ fn tag_update_test() {
         t.push(todotxt::Task::parse(test.subj, now));
 
         let mut c: todo::Conf = todo::Conf::default();
-        c.tags_act = if test.delete { todo::Action::Delete } else { todo::Action::Set };
+        let tags_act = if test.delete { todo::Action::Delete } else { todo::Action::Set };
         let mut hm = HashMap::<String, String>::new();
         for tag in &test.tags {
             if let Some(pos) = tag.find(':') {
@@ -270,7 +270,7 @@ fn tag_update_test() {
                 hm.insert(tag.to_string(), String::new());
             }
         }
-        c.tags = Some(hm);
+        c.tags = todo::TagValuesChange { action: tags_act, value: Some(hm) };
         let changed = todo::edit(&mut t, None, &c);
         if test.changes {
             assert!(changed.len() > 0 && changed[0]);

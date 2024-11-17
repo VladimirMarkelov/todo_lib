@@ -85,7 +85,6 @@ impl Default for DateTagChange {
 }
 
 /// Describes how the list-like tag should be changed.
-/// action == Action::None means no changes.
 #[derive(Debug, Clone)]
 pub struct ListTagChange {
     pub action: Action,
@@ -98,6 +97,7 @@ impl Default for ListTagChange {
     }
 }
 
+/// Describes how the priority tag should be changed.
 #[derive(Clone, Copy, Debug)]
 pub struct PriorityTagChange {
     pub action: Action,
@@ -110,6 +110,7 @@ impl Default for PriorityTagChange {
     }
 }
 
+/// Describes how the recurrency tag should be changed.
 #[derive(Clone, Copy, Debug)]
 pub struct RecurrencyTagChange {
     pub action: Action,
@@ -119,6 +120,19 @@ pub struct RecurrencyTagChange {
 impl Default for RecurrencyTagChange {
     fn default() -> RecurrencyTagChange {
         RecurrencyTagChange { action: Action::None, value: None }
+    }
+}
+
+/// Describes how tags should be changed.
+#[derive(Clone, Debug)]
+pub struct TagValuesChange {
+    pub action: Action,
+    pub value: Option<HashMap<String, String>>,
+}
+
+impl Default for TagValuesChange {
+    fn default() -> TagValuesChange {
+        TagValuesChange { action: Action::None, value: None }
     }
 }
 
@@ -162,10 +176,7 @@ pub struct Conf {
     /// Hashmap: <TagName> - <TagValue>.
     /// Use it only to change tags that are not standard ones(due, recurrence,
     /// and threshold). These tags are ignored by the function 'edit'.
-    pub tags: Option<HashMap<String, String>>,
-    /// Type of operation applied to old tags.
-    /// Only 'Set' and 'Delete' operations are supported
-    pub tags_act: Action,
+    pub tags: TagValuesChange,
     /// Update hashtags
     pub hashtags: ListTagChange,
     /// Rule to update priority when a task is done or undone
@@ -188,8 +199,7 @@ impl Default for Conf {
             projects: ListTagChange::default(),
             contexts: ListTagChange::default(),
             auto_create_date: false,
-            tags: None,
-            tags_act: Action::None,
+            tags: TagValuesChange::default(),
             hashtags: ListTagChange::default(),
             completion_mode: todotxt::CompletionMode::JustMark,
             completion_date_mode: todotxt::CompletionDateMode::WhenCreationDateIsPresent,
@@ -677,13 +687,13 @@ fn tag_update_check(task: &mut todotxt::Task, tag: &str, value: &str) -> bool {
 
 fn update_tags(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
-    if let Some(tag_list) = &c.tags {
+    if let Some(tag_list) = &c.tags.value {
         for (tag, value) in tag_list {
             let tag = tag.trim_end_matches(':');
             if is_tag_special(tag) {
                 continue;
             }
-            match c.tags_act {
+            match c.tags.action {
                 Action::Delete => {
                     changed |= tag_update_check(task, tag, "");
                 }
