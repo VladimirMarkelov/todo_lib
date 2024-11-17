@@ -63,40 +63,7 @@ fn add() {
 }
 
 #[test]
-#[allow(deprecated)] // tests functions that were left for back compatibility
-fn done() {
-    let mut t = init_tasks();
-    let orig_len = t.len();
-    let ids: todo::IDVec = vec![0, 1, 3, 4, 10];
-    let mut must_change = 0;
-    for i in &ids {
-        if t.len() < *i {
-            continue;
-        }
-        if t[*i].finished {
-            continue;
-        }
-        if t[*i].recurrence.is_some() && (t[*i].due_date.is_some() || t[*i].threshold_date.is_some()) {
-            must_change += 1;
-        }
-    }
-
-    let old_date = t[3].due_date;
-    let changed = todo::done(&mut t, Some(&ids), todotxt::CompletionMode::JustMark);
-    assert_eq!(changed, vec![true, false, true, true, false]);
-    assert!(!t[2].finished);
-    assert!(t[3].due_date == old_date);
-    for i in 0..5 {
-        assert!(i == 2 || t[i].finished);
-    }
-    assert_eq!(t.len(), orig_len + must_change);
-    for idx in orig_len..orig_len + must_change {
-        assert!(!t[idx].finished);
-    }
-}
-
-#[test]
-fn done_with_config() {
+fn done_test() {
     let mut t: Vec<todotxt::Task> = init_tasks();
     let orig_len = t.len();
     let ids: todo::IDVec = vec![0, 1, 3, 4, 10];
@@ -118,7 +85,7 @@ fn done_with_config() {
         completion_mode: todotxt::CompletionMode::JustMark,
         completion_date_mode: todotxt::CompletionDateMode::AlwaysSet,
     };
-    let changed = todo::done_with_config(&mut t, Some(&ids), completion_config);
+    let changed = todo::done(&mut t, Some(&ids), completion_config);
     assert_eq!(changed, vec![true, false, true, true, false]);
     assert!(!t[2].finished);
     assert!(t[3].due_date == old_date);

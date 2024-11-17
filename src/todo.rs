@@ -379,41 +379,13 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be completed. If it is `None`
 ///     the entire task list is marked completed
-/// * `completion_mode` = what to do with a priority on completion (see todotxt::CompletionMode)
-///
-/// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
-/// The length of the result list equals either length of `ids`(if `ids` is
-/// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
-/// array means that corresponding item from `ids` or `tasks` was modified.
-#[deprecated(note = "Use `done_with_config` instead, it has more stable api and more options")]
-pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec {
-    let c = Conf { done: true, completion_mode: mode, ..Default::default() };
-    done_undone(tasks, ids, &c)
-}
-
-/// Marks todos completed.
-///
-/// It works differently for regular and recurrent ones.
-/// If a todo is a regular one and is not done yet, the function sets flag
-/// `done` and marks the todo as modified.
-/// If a todo is a recurrent one and any of due and threshold dates exist,
-/// the function marks the current task done and appends a new task with
-/// changed due and threshold dates (current values increased by recurrence value).
-///
-/// * `tasks` - the task list
-/// * `ids` - the list of todo IDs which should be completed. If it is `None`
-///     the entire task list is marked completed
 /// * `completion_config` = how additional fields are set during completion (see todotxt::CompletionConfig)
 ///
 /// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn done_with_config(
-    tasks: &mut TaskVec,
-    ids: Option<&IDVec>,
-    completion_config: todotxt::CompletionConfig,
-) -> ChangedVec {
+pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, completion_config: todotxt::CompletionConfig) -> ChangedVec {
     let c = Conf {
         done: true,
         completion_mode: completion_config.completion_mode,

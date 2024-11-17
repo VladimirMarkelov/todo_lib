@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use todo_lib::todo::{done_with_config, edit, Action, Conf, DateTagChange, NewDateValue};
+use todo_lib::todo::{done, edit, Action, Conf, DateTagChange, NewDateValue};
 use todo_lib::todotxt::{business_days_between, CompletionConfig, CompletionDateMode, CompletionMode, Task};
 
 #[test]
@@ -382,7 +382,7 @@ fn complete_cleanup_recurrent_test() {
         let mut tasks: Vec<Task> = vec![t];
         let completion_config =
             CompletionConfig { completion_mode: d.m, completion_date_mode: CompletionDateMode::AlwaysSet };
-        let changed = done_with_config(&mut tasks, None, completion_config);
+        let changed = done(&mut tasks, None, completion_config);
 
         assert_eq!(changed.len(), 1, "Expected 1 changed tasks, got {0}", changed.len());
         println!("{:?}", tasks);
