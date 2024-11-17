@@ -63,40 +63,7 @@ fn add() {
 }
 
 #[test]
-#[allow(deprecated)] // tests functions that were left for back compatibility
-fn done() {
-    let mut t = init_tasks();
-    let orig_len = t.len();
-    let ids: todo::IDVec = vec![0, 1, 3, 4, 10];
-    let mut must_change = 0;
-    for i in &ids {
-        if t.len() < *i {
-            continue;
-        }
-        if t[*i].finished {
-            continue;
-        }
-        if t[*i].recurrence.is_some() && (t[*i].due_date.is_some() || t[*i].threshold_date.is_some()) {
-            must_change += 1;
-        }
-    }
-
-    let old_date = t[3].due_date;
-    let changed = todo::done(&mut t, Some(&ids), todotxt::CompletionMode::JustMark);
-    assert_eq!(changed, vec![true, false, true, true, false]);
-    assert!(!t[2].finished);
-    assert!(t[3].due_date == old_date);
-    for i in 0..5 {
-        assert!(i == 2 || t[i].finished);
-    }
-    assert_eq!(t.len(), orig_len + must_change);
-    for idx in orig_len..orig_len + must_change {
-        assert!(!t[idx].finished);
-    }
-}
-
-#[test]
-fn done_with_config() {
+fn done_test() {
     let mut t: Vec<todotxt::Task> = init_tasks();
     let orig_len = t.len();
     let ids: todo::IDVec = vec![0, 1, 3, 4, 10];
@@ -118,7 +85,7 @@ fn done_with_config() {
         completion_mode: todotxt::CompletionMode::JustMark,
         completion_date_mode: todotxt::CompletionDateMode::AlwaysSet,
     };
-    let changed = todo::done_with_config(&mut t, Some(&ids), completion_config);
+    let changed = todo::done(&mut t, Some(&ids), completion_config);
     assert_eq!(changed, vec![true, false, true, true, false]);
     assert!(!t[2].finished);
     assert!(t[3].due_date == old_date);
@@ -170,21 +137,19 @@ fn recs() {
     let mut c: todo::Conf = Default::default();
 
     let ids: todo::IDVec = vec![0, 1, 2, 3, 4, 5];
-    c.project_act = todo::Action::Delete;
-    c.projects = vec!["noproj".to_string()];
+    c.projects = todo::ListTagChange { action: todo::Action::Delete, value: vec!["noproj".to_string()] };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![false, false, false, false, false, false]);
 
-    c.projects = vec!["CAR".to_string()];
+    c.projects = todo::ListTagChange { action: todo::Action::Delete, value: vec!["CAR".to_string()] };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![false, false, false, true, false, false]);
 
-    c.project_act = todo::Action::Replace;
-    c.projects = vec!["Family+People".to_string()];
+    c.projects = todo::ListTagChange { action: todo::Action::Replace, value: vec!["Family+People".to_string()] };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![true, false, false, false, false, false]);
 
-    c.recurrence_act = todo::Action::Delete;
+    c.recurrence = todo::RecurrencyTagChange { action: todo::Action::Delete, value: None };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![false, false, false, false, true, true]);
 }
@@ -263,7 +228,7 @@ fn tag_update_test() {
         t.push(todotxt::Task::parse(test.subj, now));
 
         let mut c: todo::Conf = todo::Conf::default();
-        c.tags_act = if test.delete { todo::Action::Delete } else { todo::Action::Set };
+        let tags_act = if test.delete { todo::Action::Delete } else { todo::Action::Set };
         let mut hm = HashMap::<String, String>::new();
         for tag in &test.tags {
             if let Some(pos) = tag.find(':') {
@@ -272,7 +237,7 @@ fn tag_update_test() {
                 hm.insert(tag.to_string(), String::new());
             }
         }
-        c.tags = Some(hm);
+        c.tags = todo::TagValuesChange { action: tags_act, value: Some(hm) };
         let changed = todo::edit(&mut t, None, &c);
         if test.changes {
             assert!(changed.len() > 0 && changed[0]);
@@ -346,8 +311,7 @@ fn hashtags_test() {
         for h in test.hashtags.iter() {
             hvec.push(h.to_string());
         }
-        c.hashtags = Some(hvec);
-        c.hashtags_act = test.act;
+        c.hashtags = todo::ListTagChange { value: hvec, action: test.act };
         let changed = todo::edit(&mut t, None, &c);
         assert!(changed.len() > 0, "{}. {}", idx, t[0].subject);
         assert_eq!(changed[0], test.changed, "{}. {}", idx, t[0].subject);

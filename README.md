@@ -88,7 +88,7 @@ Functions of this category gets a list of all todos, list of todo IDs that shoul
 
 ##### Mark a todo completed
 
-`done_with_config(tasks: &mut TaskVec, ids: Option<&IDVec>, completion_config: todotxt::CompletionConfig) -> ChangedVec`
+`done(tasks: &mut TaskVec, ids: Option<&IDVec>, completion_config: todotxt::CompletionConfig) -> ChangedVec`
 
 Makes all todos from `ids` list that are incomplete completed.
 

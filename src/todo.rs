@@ -9,6 +9,7 @@ use std::io::BufReader;
 use std::io::Write;
 use std::path::Path;
 
+use crate::date_expr;
 use crate::terr;
 use crate::timer;
 use crate::todotxt;
@@ -27,6 +28,16 @@ pub type IDVec = Vec<usize>;
 pub type IDSlice = [usize];
 pub type ChangedVec = Vec<bool>;
 pub type ChangedSlice = [bool];
+
+/// The new value for a date-like tag.
+/// Date - a fixed date, one for all tasks
+/// Expr - an expression that is calculated for each of selected tasks. E.g, `due+1w`
+#[derive(Debug, Clone)]
+pub enum NewDateValue {
+    Date(chrono::NaiveDate),
+    Expr(String),
+    None,
+}
 
 /// Type of operation applied to todo properties. Every field supports
 /// its own set of operations (except `None` that can be used for all of them):
@@ -59,6 +70,72 @@ pub enum Action {
     Decrease,
 }
 
+/// Describes how the date-like tag should be changed.
+/// action == Action::None means no changes.
+#[derive(Debug, Clone)]
+pub struct DateTagChange {
+    pub action: Action,
+    pub value: NewDateValue,
+}
+
+impl Default for DateTagChange {
+    fn default() -> DateTagChange {
+        DateTagChange { action: Action::None, value: NewDateValue::None }
+    }
+}
+
+/// Describes how the list-like tag should be changed.
+#[derive(Debug, Clone)]
+pub struct ListTagChange {
+    pub action: Action,
+    pub value: Vec<String>,
+}
+
+impl Default for ListTagChange {
+    fn default() -> ListTagChange {
+        ListTagChange { action: Action::None, value: Vec::new() }
+    }
+}
+
+/// Describes how the priority tag should be changed.
+#[derive(Clone, Copy, Debug)]
+pub struct PriorityTagChange {
+    pub action: Action,
+    pub value: u8,
+}
+
+impl Default for PriorityTagChange {
+    fn default() -> PriorityTagChange {
+        PriorityTagChange { action: Action::None, value: todotxt::NO_PRIORITY }
+    }
+}
+
+/// Describes how the recurrency tag should be changed.
+#[derive(Clone, Copy, Debug)]
+pub struct RecurrencyTagChange {
+    pub action: Action,
+    pub value: Option<todotxt::Recurrence>,
+}
+
+impl Default for RecurrencyTagChange {
+    fn default() -> RecurrencyTagChange {
+        RecurrencyTagChange { action: Action::None, value: None }
+    }
+}
+
+/// Describes how tags should be changed.
+#[derive(Clone, Debug)]
+pub struct TagValuesChange {
+    pub action: Action,
+    pub value: Option<HashMap<String, String>>,
+}
+
+impl Default for TagValuesChange {
+    fn default() -> TagValuesChange {
+        TagValuesChange { action: Action::None, value: None }
+    }
+}
+
 /// The list of changes to apply to all records in a list. All operations with
 /// text are case insensitive, so if you, e.g., try to replace a project
 /// `projectone` to `ProjectOne` no todo is updated
@@ -74,35 +151,23 @@ pub struct Conf {
     /// subject it is parsed and all todo properties are filled with parsed data
     pub subject: Option<String>,
     /// New priority (is not used if action is `Delete, `Increase` or `Decrease`)
-    pub priority: u8,
-    /// Type of operation applied to old priority
-    pub priority_act: Action,
+    pub priority: PriorityTagChange,
     /// New due date
-    pub due: Option<chrono::NaiveDate>,
-    /// Type of operation applied to old due date
-    pub due_act: Action,
+    pub due: DateTagChange,
     /// New threshold date
-    pub thr: Option<chrono::NaiveDate>,
-    /// Type of operation applied to old threshold date
-    pub thr_act: Action,
+    pub thr: DateTagChange,
     /// New recurrence
-    pub recurrence: Option<todotxt::Recurrence>,
-    /// Type of operation applied to old recurrence
-    pub recurrence_act: Action,
+    pub recurrence: RecurrencyTagChange,
     /// List of projects.
     /// For `Set` and `Delete` is a list of strings;
     /// For `Replace` it is a list of strings containing pairs in format:
     /// `old_project+new_project`
-    pub projects: Vec<String>,
-    /// Type of operation applied to projects
-    pub project_act: Action,
+    pub projects: ListTagChange,
     /// List of contexts.
     /// For `Set` and `Delete` is a list of strings;
     /// For `Replace` it is a list of strings containing pairs in format:
     /// `old_context@new_context`
-    pub contexts: Vec<String>,
-    /// Type of operation applied to contexts
-    pub context_act: Action,
+    pub contexts: ListTagChange,
     /// Automatically set creation date to today if it is not defined in subject
     /// when adding a new todo
     pub auto_create_date: bool,
@@ -111,19 +176,15 @@ pub struct Conf {
     /// Hashmap: <TagName> - <TagValue>.
     /// Use it only to change tags that are not standard ones(due, recurrence,
     /// and threshold). These tags are ignored by the function 'edit'.
-    pub tags: Option<HashMap<String, String>>,
-    /// Type of operation applied to old tags.
-    /// Only 'Set' and 'Delete' operations are supported
-    pub tags_act: Action,
+    pub tags: TagValuesChange,
     /// Update hashtags
-    pub hashtags: Option<Vec<String>>,
-    /// Type of operation applied to old hashtags.
-    /// Only 'Set', 'Delete', and 'Replace' are supported.
-    pub hashtags_act: Action,
+    pub hashtags: ListTagChange,
     /// Rule to update priority when a task is done or undone
     pub completion_mode: todotxt::CompletionMode,
     /// Rule to set a completion date when a task is done
     pub completion_date_mode: todotxt::CompletionDateMode,
+    /// The value of `soon` for calculating expression like `soon`.
+    pub soon_days: u8,
 }
 
 impl Default for Conf {
@@ -131,25 +192,18 @@ impl Default for Conf {
         Conf {
             subject: None,
             done: true,
-            priority: todotxt::NO_PRIORITY,
-            priority_act: Action::None,
-            due: None,
-            due_act: Action::None,
-            thr: None,
-            thr_act: Action::None,
-            recurrence: None,
-            recurrence_act: Action::None,
-            projects: Vec::new(),
-            project_act: Action::None,
-            contexts: Vec::new(),
-            context_act: Action::None,
+            priority: PriorityTagChange::default(),
+            due: DateTagChange::default(),
+            thr: DateTagChange::default(),
+            recurrence: RecurrencyTagChange::default(),
+            projects: ListTagChange::default(),
+            contexts: ListTagChange::default(),
             auto_create_date: false,
-            tags: None,
-            tags_act: Action::None,
-            hashtags: None,
-            hashtags_act: Action::None,
+            tags: TagValuesChange::default(),
+            hashtags: ListTagChange::default(),
             completion_mode: todotxt::CompletionMode::JustMark,
             completion_date_mode: todotxt::CompletionDateMode::WhenCreationDateIsPresent,
+            soon_days: 0,
         }
     }
 }
@@ -325,41 +379,13 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be completed. If it is `None`
 ///     the entire task list is marked completed
-/// * `completion_mode` = what to do with a priority on completion (see todotxt::CompletionMode)
-///
-/// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
-/// The length of the result list equals either length of `ids`(if `ids` is
-/// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
-/// array means that corresponding item from `ids` or `tasks` was modified.
-#[deprecated(note = "Use `done_with_config` instead, it has more stable api and more options")]
-pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::CompletionMode) -> ChangedVec {
-    let c = Conf { done: true, completion_mode: mode, ..Default::default() };
-    done_undone(tasks, ids, &c)
-}
-
-/// Marks todos completed.
-///
-/// It works differently for regular and recurrent ones.
-/// If a todo is a regular one and is not done yet, the function sets flag
-/// `done` and marks the todo as modified.
-/// If a todo is a recurrent one and any of due and threshold dates exist,
-/// the function marks the current task done and appends a new task with
-/// changed due and threshold dates (current values increased by recurrence value).
-///
-/// * `tasks` - the task list
-/// * `ids` - the list of todo IDs which should be completed. If it is `None`
-///     the entire task list is marked completed
 /// * `completion_config` = how additional fields are set during completion (see todotxt::CompletionConfig)
 ///
 /// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
 /// The length of the result list equals either length of `ids`(if `ids` is
 /// `Some`) or  length of `tasks`(if `ids` is `None`). Value `true` in this
 /// array means that corresponding item from `ids` or `tasks` was modified.
-pub fn done_with_config(
-    tasks: &mut TaskVec,
-    ids: Option<&IDVec>,
-    completion_config: todotxt::CompletionConfig,
-) -> ChangedVec {
+pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, completion_config: todotxt::CompletionConfig) -> ChangedVec {
     let c = Conf {
         done: true,
         completion_mode: completion_config.completion_mode,
@@ -429,10 +455,10 @@ pub fn remove(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
 }
 
 fn update_priority(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.priority_act {
+    match c.priority.action {
         Action::Set => {
-            if task.priority != c.priority {
-                task.priority = c.priority;
+            if task.priority != c.priority.value {
+                task.priority = c.priority.value;
                 return true;
             }
         }
@@ -460,11 +486,25 @@ fn update_priority(task: &mut todotxt::Task, c: &Conf) -> bool {
     false
 }
 
-fn update_due_date(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.due_act {
+fn update_due_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) -> bool {
+    match c.due.action {
         Action::Set => {
-            if tsort::cmp_opt_dates(task.due_date, c.due) != Ordering::Equal {
-                match c.due {
+            let new_due = match &c.due.value {
+                NewDateValue::None => None,
+                NewDateValue::Date(dt) => Some(*dt),
+                NewDateValue::Expr(expr) => {
+                    let mut tlist = date_expr::TaskTagList::from_task(task);
+                    match date_expr::calculate_expr(base, expr, &mut tlist, c.soon_days) {
+                        Err(e) => {
+                            eprintln!("Failed to calculate due date expression [{expr}]: {e:?}");
+                            return false;
+                        }
+                        Ok(d) => Some(d),
+                    }
+                }
+            };
+            if tsort::cmp_opt_dates(task.due_date, new_due) != Ordering::Equal {
+                match new_due {
                     None => task.update_tag_with_value(todotxt::DUE_TAG, ""),
                     Some(dt) => task.update_tag_with_value(todotxt::DUE_TAG, &todotxt::format_date(dt)),
                 };
@@ -483,11 +523,25 @@ fn update_due_date(task: &mut todotxt::Task, c: &Conf) -> bool {
     false
 }
 
-fn update_thr_date(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.thr_act {
+fn update_thr_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) -> bool {
+    match c.thr.action {
         Action::Set => {
-            if tsort::cmp_opt_dates(task.threshold_date, c.thr) != Ordering::Equal {
-                match c.thr {
+            let new_thr = match &c.thr.value {
+                NewDateValue::None => None,
+                NewDateValue::Date(dt) => Some(*dt),
+                NewDateValue::Expr(expr) => {
+                    let mut tlist = date_expr::TaskTagList::from_task(task);
+                    match date_expr::calculate_expr(base, expr, &mut tlist, c.soon_days) {
+                        Err(e) => {
+                            eprintln!("Failed to calculate threshold date expression [{expr}]: {e:?}");
+                            return false;
+                        }
+                        Ok(d) => Some(d),
+                    }
+                }
+            };
+            if tsort::cmp_opt_dates(task.threshold_date, new_thr) != Ordering::Equal {
+                match new_thr {
                     None => task.update_tag_with_value(todotxt::THR_TAG, ""),
                     Some(dt) => task.update_tag_with_value(todotxt::THR_TAG, &todotxt::format_date(dt)),
                 };
@@ -507,10 +561,10 @@ fn update_thr_date(task: &mut todotxt::Task, c: &Conf) -> bool {
 }
 
 fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.recurrence_act {
+    match c.recurrence.action {
         Action::Set => {
-            if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence) {
-                if let Some(nr) = &c.recurrence {
+            if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence.value) {
+                if let Some(nr) = &c.recurrence.value {
                     let new_rec = format!("{nr}");
                     let updated = task.update_tag(&new_rec);
                     if updated && task.finished {
@@ -535,8 +589,8 @@ fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
 fn update_projects(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
 
-    for new_p in &c.projects {
-        match c.project_act {
+    for new_p in &c.projects.value {
+        match c.projects.action {
             Action::Set => {
                 let old_subj = task.subject.clone();
                 task.replace_project("", new_p);
@@ -565,8 +619,8 @@ fn update_projects(task: &mut todotxt::Task, c: &Conf) -> bool {
 fn update_contexts(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
 
-    for new_c in &c.contexts {
-        match c.context_act {
+    for new_c in &c.contexts.value {
+        match c.contexts.action {
             Action::Set => {
                 let old_subj = task.subject.clone();
                 task.replace_context("", new_c);
@@ -605,13 +659,13 @@ fn tag_update_check(task: &mut todotxt::Task, tag: &str, value: &str) -> bool {
 
 fn update_tags(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
-    if let Some(tag_list) = &c.tags {
+    if let Some(tag_list) = &c.tags.value {
         for (tag, value) in tag_list {
             let tag = tag.trim_end_matches(':');
             if is_tag_special(tag) {
                 continue;
             }
-            match c.tags_act {
+            match c.tags.action {
                 Action::Delete => {
                     changed |= tag_update_check(task, tag, "");
                 }
@@ -669,15 +723,13 @@ fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) ->
 
 fn update_hashtags(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
-    if let Some(hashtag_list) = &c.hashtags {
-        for hashtag in hashtag_list {
-            let hashtag = hashtag.trim_start_matches('#');
-            match c.hashtags_act {
-                Action::Delete | Action::Set | Action::Replace => {
-                    changed |= hashtag_update_check(task, hashtag, c.hashtags_act)
-                }
-                _ => {}
+    for hashtag in &c.hashtags.value {
+        let hashtag = hashtag.trim_start_matches('#');
+        match c.hashtags.action {
+            Action::Delete | Action::Set | Action::Replace => {
+                changed |= hashtag_update_check(task, hashtag, c.hashtags.action)
             }
+            _ => {}
         }
     }
     changed
@@ -736,8 +788,8 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
         }
 
         bools[i] = update_priority(&mut tasks[id], c);
-        bools[i] |= update_due_date(&mut tasks[id], c);
-        bools[i] |= update_thr_date(&mut tasks[id], c);
+        bools[i] |= update_due_date(&mut tasks[id], now, c);
+        bools[i] |= update_thr_date(&mut tasks[id], now, c);
         bools[i] |= update_recurrence(&mut tasks[id], c);
         bools[i] |= update_projects(&mut tasks[id], c);
         bools[i] |= update_contexts(&mut tasks[id], c);

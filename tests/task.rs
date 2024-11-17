@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use todo_lib::todo::done;
+use todo_lib::todo::{done, edit, Action, Conf, DateTagChange, NewDateValue};
 use todo_lib::todotxt::{business_days_between, CompletionConfig, CompletionDateMode, CompletionMode, Task};
 
 #[test]
@@ -380,7 +380,9 @@ fn complete_cleanup_recurrent_test() {
     for d in data.iter() {
         let t = Task::parse(d.i, base);
         let mut tasks: Vec<Task> = vec![t];
-        let changed = done(&mut tasks, None, d.m);
+        let completion_config =
+            CompletionConfig { completion_mode: d.m, completion_date_mode: CompletionDateMode::AlwaysSet };
+        let changed = done(&mut tasks, None, completion_config);
 
         assert_eq!(changed.len(), 1, "Expected 1 changed tasks, got {0}", changed.len());
         println!("{:?}", tasks);
@@ -571,4 +573,34 @@ fn finish_date_without_create_date() {
         ..Default::default()
     };
     assert_eq!(task.to_string(), "x 1970-01-02 Feed cat")
+}
+
+#[test]
+fn due_expr_test() {
+    struct Test {
+        i: &'static str,
+        e: &'static str,
+        d: &'static str,
+    }
+    let data: Vec<Test> = vec![
+        Test { i: "feed cat thr:2020-10-10", e: "thr+1d", d: "feed cat thr:2020-10-10 due:2020-10-11" },
+        Test { i: "feed cat due:2020-10-09 thr:2020-10-10", e: "thr+1d", d: "feed cat due:2020-10-11 thr:2020-10-10" },
+        Test { i: "feed cat due:2020-10-09 thr:2020-10-10", e: "due+1d", d: "feed cat due:2020-10-10 thr:2020-10-10" },
+        Test {
+            i: "feed cat due:2020-10-09 thr:2020-10-10",
+            e: "due+1m-1d",
+            d: "feed cat due:2020-11-08 thr:2020-10-10",
+        },
+    ];
+    let base = NaiveDate::from_ymd_opt(2020, 10, 12).unwrap();
+    for d in data.iter() {
+        let t = Task::parse(d.i, base);
+        let mut tasks = vec![t];
+        let mut c = Conf::default();
+        c.due = DateTagChange { action: Action::Set, value: NewDateValue::Expr(d.e.to_string()) };
+        let changed = edit(&mut tasks, None, &c);
+        assert_eq!(changed.len(), 1, "The subject must change");
+        assert!(changed[0], "The subject of the first task must change");
+        assert_eq!(tasks[0].subject, d.d, "New value must be {0}, got {1}", d.d, tasks[0].subject);
+    }
 }
