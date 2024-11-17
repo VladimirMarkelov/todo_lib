@@ -147,10 +147,7 @@ pub struct Conf {
     /// Only 'Set' and 'Delete' operations are supported
     pub tags_act: Action,
     /// Update hashtags
-    pub hashtags: Option<Vec<String>>,
-    /// Type of operation applied to old hashtags.
-    /// Only 'Set', 'Delete', and 'Replace' are supported.
-    pub hashtags_act: Action,
+    pub hashtags: ListTagChange,
     /// Rule to update priority when a task is done or undone
     pub completion_mode: todotxt::CompletionMode,
     /// Rule to set a completion date when a task is done
@@ -175,8 +172,7 @@ impl Default for Conf {
             auto_create_date: false,
             tags: None,
             tags_act: Action::None,
-            hashtags: None,
-            hashtags_act: Action::None,
+            hashtags: ListTagChange::default(),
             completion_mode: todotxt::CompletionMode::JustMark,
             completion_date_mode: todotxt::CompletionDateMode::WhenCreationDateIsPresent,
             soon_days: 0,
@@ -727,15 +723,13 @@ fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) ->
 
 fn update_hashtags(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
-    if let Some(hashtag_list) = &c.hashtags {
-        for hashtag in hashtag_list {
-            let hashtag = hashtag.trim_start_matches('#');
-            match c.hashtags_act {
-                Action::Delete | Action::Set | Action::Replace => {
-                    changed |= hashtag_update_check(task, hashtag, c.hashtags_act)
-                }
-                _ => {}
+    for hashtag in &c.hashtags.value {
+        let hashtag = hashtag.trim_start_matches('#');
+        match c.hashtags.action {
+            Action::Delete | Action::Set | Action::Replace => {
+                changed |= hashtag_update_check(task, hashtag, c.hashtags.action)
             }
+            _ => {}
         }
     }
     changed

@@ -344,8 +344,7 @@ fn hashtags_test() {
         for h in test.hashtags.iter() {
             hvec.push(h.to_string());
         }
-        c.hashtags = Some(hvec);
-        c.hashtags_act = test.act;
+        c.hashtags = todo::ListTagChange { value: hvec, action: test.act };
         let changed = todo::edit(&mut t, None, &c);
         assert!(changed.len() > 0, "{}. {}", idx, t[0].subject);
         assert_eq!(changed[0], test.changed, "{}. {}", idx, t[0].subject);
