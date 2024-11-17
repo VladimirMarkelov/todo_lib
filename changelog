@@ -1,3 +1,18 @@
+2024-11-17 - version 8.0.0
+[*] Breaking changes:
+	- deprecated function `done` (since 7.2.0) is removed. The new function
+	  `done_with_config` is renamed as `done`
+	- Conf struct reorganization:
+		* previously separated fields `<name>` and `<name>_action` are grouped
+		  into sub-structs in a form `<name>: { <action>, <value> }`
+		+ added field `soon_days` for calculating dates like `soon+1d`
+		+ all date fields (`due` and `threshold`) got extra feature: you can
+		  define a new value not only by setting an exact date, but by setting
+		  an expression that is calculated for each task. It makes easier to,
+		  e.g, push all due dates by a week by passing expression `due+1w`
+[+] Added a lot of functions to deal with human-readable date expressions like
+    `due+1w` or `today+1m`
+
 2024-08-24 - version 7.2.2
 [*] Update dependencies. Switch to 'thiserror' v2 from v1. Clippy fixes.
 
