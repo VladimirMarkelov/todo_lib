@@ -110,6 +110,18 @@ impl Default for PriorityTagChange {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct RecurrencyTagChange {
+    pub action: Action,
+    pub value: Option<todotxt::Recurrence>,
+}
+
+impl Default for RecurrencyTagChange {
+    fn default() -> RecurrencyTagChange {
+        RecurrencyTagChange { action: Action::None, value: None }
+    }
+}
+
 /// The list of changes to apply to all records in a list. All operations with
 /// text are case insensitive, so if you, e.g., try to replace a project
 /// `projectone` to `ProjectOne` no todo is updated
@@ -131,9 +143,7 @@ pub struct Conf {
     /// New threshold date
     pub thr: DateTagChange,
     /// New recurrence
-    pub recurrence: Option<todotxt::Recurrence>,
-    /// Type of operation applied to old recurrence
-    pub recurrence_act: Action,
+    pub recurrence: RecurrencyTagChange,
     /// List of projects.
     /// For `Set` and `Delete` is a list of strings;
     /// For `Replace` it is a list of strings containing pairs in format:
@@ -174,8 +184,7 @@ impl Default for Conf {
             priority: PriorityTagChange::default(),
             due: DateTagChange::default(),
             thr: DateTagChange::default(),
-            recurrence: None,
-            recurrence_act: Action::None,
+            recurrence: RecurrencyTagChange::default(),
             projects: ListTagChange::default(),
             contexts: ListTagChange::default(),
             auto_create_date: false,
@@ -570,10 +579,10 @@ fn update_thr_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) 
 }
 
 fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.recurrence_act {
+    match c.recurrence.action {
         Action::Set => {
-            if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence) {
-                if let Some(nr) = &c.recurrence {
+            if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence.value) {
+                if let Some(nr) = &c.recurrence.value {
                     let new_rec = format!("{nr}");
                     let updated = task.update_tag(&new_rec);
                     if updated && task.finished {

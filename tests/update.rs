@@ -182,7 +182,7 @@ fn recs() {
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![true, false, false, false, false, false]);
 
-    c.recurrence_act = todo::Action::Delete;
+    c.recurrence = todo::RecurrencyTagChange { action: todo::Action::Delete, value: None };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![false, false, false, false, true, true]);
 }
