@@ -9,6 +9,7 @@ use std::io::BufReader;
 use std::io::Write;
 use std::path::Path;
 
+use crate::date_expr;
 use crate::terr;
 use crate::timer;
 use crate::todotxt;
@@ -27,6 +28,16 @@ pub type IDVec = Vec<usize>;
 pub type IDSlice = [usize];
 pub type ChangedVec = Vec<bool>;
 pub type ChangedSlice = [bool];
+
+/// The new value for a date-like tag.
+/// Date - a fixed date, one for all tasks
+/// Expr - an expression that is calculated for each of selected tasks. E.g, `due+1w`
+#[derive(Debug, Clone)]
+pub enum NewDateValue {
+    Date(chrono::NaiveDate),
+    Expr(String),
+    None,
+}
 
 /// Type of operation applied to todo properties. Every field supports
 /// its own set of operations (except `None` that can be used for all of them):
@@ -59,6 +70,34 @@ pub enum Action {
     Decrease,
 }
 
+/// Describes how the date-like tag should be changed.
+/// action == Action::None means no changes.
+#[derive(Debug, Clone)]
+pub struct DateTagChange {
+    pub action: Action,
+    pub value: NewDateValue,
+}
+
+impl Default for DateTagChange {
+    fn default() -> DateTagChange {
+        DateTagChange { action: Action::None, value: NewDateValue::None }
+    }
+}
+
+/// Describes how the list-like tag should be changed.
+/// action == Action::None means no changes.
+#[derive(Debug, Clone)]
+pub struct ListTagChange {
+    pub action: Action,
+    pub value: Vec<String>,
+}
+
+impl Default for ListTagChange {
+    fn default() -> ListTagChange {
+        ListTagChange { action: Action::None, value: Vec::new() }
+    }
+}
+
 /// The list of changes to apply to all records in a list. All operations with
 /// text are case insensitive, so if you, e.g., try to replace a project
 /// `projectone` to `ProjectOne` no todo is updated
@@ -78,13 +117,9 @@ pub struct Conf {
     /// Type of operation applied to old priority
     pub priority_act: Action,
     /// New due date
-    pub due: Option<chrono::NaiveDate>,
-    /// Type of operation applied to old due date
-    pub due_act: Action,
+    pub due: DateTagChange,
     /// New threshold date
-    pub thr: Option<chrono::NaiveDate>,
-    /// Type of operation applied to old threshold date
-    pub thr_act: Action,
+    pub thr: DateTagChange,
     /// New recurrence
     pub recurrence: Option<todotxt::Recurrence>,
     /// Type of operation applied to old recurrence
@@ -93,16 +128,12 @@ pub struct Conf {
     /// For `Set` and `Delete` is a list of strings;
     /// For `Replace` it is a list of strings containing pairs in format:
     /// `old_project+new_project`
-    pub projects: Vec<String>,
-    /// Type of operation applied to projects
-    pub project_act: Action,
+    pub projects: ListTagChange,
     /// List of contexts.
     /// For `Set` and `Delete` is a list of strings;
     /// For `Replace` it is a list of strings containing pairs in format:
     /// `old_context@new_context`
-    pub contexts: Vec<String>,
-    /// Type of operation applied to contexts
-    pub context_act: Action,
+    pub contexts: ListTagChange,
     /// Automatically set creation date to today if it is not defined in subject
     /// when adding a new todo
     pub auto_create_date: bool,
@@ -124,6 +155,8 @@ pub struct Conf {
     pub completion_mode: todotxt::CompletionMode,
     /// Rule to set a completion date when a task is done
     pub completion_date_mode: todotxt::CompletionDateMode,
+    /// The value of `soon` for calculating expression like `soon`.
+    pub soon_days: u8,
 }
 
 impl Default for Conf {
@@ -133,16 +166,12 @@ impl Default for Conf {
             done: true,
             priority: todotxt::NO_PRIORITY,
             priority_act: Action::None,
-            due: None,
-            due_act: Action::None,
-            thr: None,
-            thr_act: Action::None,
+            due: DateTagChange::default(),
+            thr: DateTagChange::default(),
             recurrence: None,
             recurrence_act: Action::None,
-            projects: Vec::new(),
-            project_act: Action::None,
-            contexts: Vec::new(),
-            context_act: Action::None,
+            projects: ListTagChange::default(),
+            contexts: ListTagChange::default(),
             auto_create_date: false,
             tags: None,
             tags_act: Action::None,
@@ -150,6 +179,7 @@ impl Default for Conf {
             hashtags_act: Action::None,
             completion_mode: todotxt::CompletionMode::JustMark,
             completion_date_mode: todotxt::CompletionDateMode::WhenCreationDateIsPresent,
+            soon_days: 0,
         }
     }
 }
@@ -460,11 +490,25 @@ fn update_priority(task: &mut todotxt::Task, c: &Conf) -> bool {
     false
 }
 
-fn update_due_date(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.due_act {
+fn update_due_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) -> bool {
+    match c.due.action {
         Action::Set => {
-            if tsort::cmp_opt_dates(task.due_date, c.due) != Ordering::Equal {
-                match c.due {
+            let new_due = match &c.due.value {
+                NewDateValue::None => None,
+                NewDateValue::Date(dt) => Some(*dt),
+                NewDateValue::Expr(expr) => {
+                    let mut tlist = date_expr::TaskTagList::from_task(task);
+                    match date_expr::calculate_expr(base, expr, &mut tlist, c.soon_days) {
+                        Err(e) => {
+                            eprintln!("Failed to calculate due date expression [{expr}]: {e:?}");
+                            return false;
+                        }
+                        Ok(d) => Some(d),
+                    }
+                }
+            };
+            if tsort::cmp_opt_dates(task.due_date, new_due) != Ordering::Equal {
+                match new_due {
                     None => task.update_tag_with_value(todotxt::DUE_TAG, ""),
                     Some(dt) => task.update_tag_with_value(todotxt::DUE_TAG, &todotxt::format_date(dt)),
                 };
@@ -483,11 +527,25 @@ fn update_due_date(task: &mut todotxt::Task, c: &Conf) -> bool {
     false
 }
 
-fn update_thr_date(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.thr_act {
+fn update_thr_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) -> bool {
+    match c.thr.action {
         Action::Set => {
-            if tsort::cmp_opt_dates(task.threshold_date, c.thr) != Ordering::Equal {
-                match c.thr {
+            let new_thr = match &c.thr.value {
+                NewDateValue::None => None,
+                NewDateValue::Date(dt) => Some(*dt),
+                NewDateValue::Expr(expr) => {
+                    let mut tlist = date_expr::TaskTagList::from_task(task);
+                    match date_expr::calculate_expr(base, expr, &mut tlist, c.soon_days) {
+                        Err(e) => {
+                            eprintln!("Failed to calculate threshold date expression [{expr}]: {e:?}");
+                            return false;
+                        }
+                        Ok(d) => Some(d),
+                    }
+                }
+            };
+            if tsort::cmp_opt_dates(task.threshold_date, new_thr) != Ordering::Equal {
+                match new_thr {
                     None => task.update_tag_with_value(todotxt::THR_TAG, ""),
                     Some(dt) => task.update_tag_with_value(todotxt::THR_TAG, &todotxt::format_date(dt)),
                 };
@@ -535,8 +593,8 @@ fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
 fn update_projects(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
 
-    for new_p in &c.projects {
-        match c.project_act {
+    for new_p in &c.projects.value {
+        match c.projects.action {
             Action::Set => {
                 let old_subj = task.subject.clone();
                 task.replace_project("", new_p);
@@ -565,8 +623,8 @@ fn update_projects(task: &mut todotxt::Task, c: &Conf) -> bool {
 fn update_contexts(task: &mut todotxt::Task, c: &Conf) -> bool {
     let mut changed = false;
 
-    for new_c in &c.contexts {
-        match c.context_act {
+    for new_c in &c.contexts.value {
+        match c.contexts.action {
             Action::Set => {
                 let old_subj = task.subject.clone();
                 task.replace_context("", new_c);
@@ -736,8 +794,8 @@ pub fn edit(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec {
         }
 
         bools[i] = update_priority(&mut tasks[id], c);
-        bools[i] |= update_due_date(&mut tasks[id], c);
-        bools[i] |= update_thr_date(&mut tasks[id], c);
+        bools[i] |= update_due_date(&mut tasks[id], now, c);
+        bools[i] |= update_thr_date(&mut tasks[id], now, c);
         bools[i] |= update_recurrence(&mut tasks[id], c);
         bools[i] |= update_projects(&mut tasks[id], c);
         bools[i] |= update_contexts(&mut tasks[id], c);

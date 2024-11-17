@@ -170,17 +170,15 @@ fn recs() {
     let mut c: todo::Conf = Default::default();
 
     let ids: todo::IDVec = vec![0, 1, 2, 3, 4, 5];
-    c.project_act = todo::Action::Delete;
-    c.projects = vec!["noproj".to_string()];
+    c.projects = todo::ListTagChange { action: todo::Action::Delete, value: vec!["noproj".to_string()] };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![false, false, false, false, false, false]);
 
-    c.projects = vec!["CAR".to_string()];
+    c.projects = todo::ListTagChange { action: todo::Action::Delete, value: vec!["CAR".to_string()] };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![false, false, false, true, false, false]);
 
-    c.project_act = todo::Action::Replace;
-    c.projects = vec!["Family+People".to_string()];
+    c.projects = todo::ListTagChange { action: todo::Action::Replace, value: vec!["Family+People".to_string()] };
     let changed = todo::edit(&mut t, Some(&ids), &c);
     assert_eq!(changed, vec![true, false, false, false, false, false]);
 
