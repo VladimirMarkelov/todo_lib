@@ -98,6 +98,18 @@ impl Default for ListTagChange {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct PriorityTagChange {
+    pub action: Action,
+    pub value: u8,
+}
+
+impl Default for PriorityTagChange {
+    fn default() -> PriorityTagChange {
+        PriorityTagChange { action: Action::None, value: todotxt::NO_PRIORITY }
+    }
+}
+
 /// The list of changes to apply to all records in a list. All operations with
 /// text are case insensitive, so if you, e.g., try to replace a project
 /// `projectone` to `ProjectOne` no todo is updated
@@ -113,9 +125,7 @@ pub struct Conf {
     /// subject it is parsed and all todo properties are filled with parsed data
     pub subject: Option<String>,
     /// New priority (is not used if action is `Delete, `Increase` or `Decrease`)
-    pub priority: u8,
-    /// Type of operation applied to old priority
-    pub priority_act: Action,
+    pub priority: PriorityTagChange,
     /// New due date
     pub due: DateTagChange,
     /// New threshold date
@@ -161,8 +171,7 @@ impl Default for Conf {
         Conf {
             subject: None,
             done: true,
-            priority: todotxt::NO_PRIORITY,
-            priority_act: Action::None,
+            priority: PriorityTagChange::default(),
             due: DateTagChange::default(),
             thr: DateTagChange::default(),
             recurrence: None,
@@ -455,10 +464,10 @@ pub fn remove(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
 }
 
 fn update_priority(task: &mut todotxt::Task, c: &Conf) -> bool {
-    match c.priority_act {
+    match c.priority.action {
         Action::Set => {
-            if task.priority != c.priority {
-                task.priority = c.priority;
+            if task.priority != c.priority.value {
+                task.priority = c.priority.value;
                 return true;
             }
         }
