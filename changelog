@@ -1,3 +1,10 @@
+2025-01-17 - version 8.1.0
+[+] Added new special dates: month names. It is possible to use short (3
+    letter names and full month names when setting due and other dates. Also
+	these special dates can be used in expression, e.g 'due:apr+7d'.
+	Setting a date to a month name effectively sets the date to the first day
+	of that month. The date is always in the future. So, if you set 'apr' on
+	the first of April, the date will be first of April in the next year.
 2024-11-17 - version 8.0.0
 [*] Breaking changes:
 	- deprecated function `done` (since 7.2.0) is removed. The new function
