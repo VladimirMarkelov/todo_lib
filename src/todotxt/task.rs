@@ -117,10 +117,7 @@ fn next_word(s: &str) -> &str {
 }
 
 fn try_read_date(s: &str, base: NaiveDate) -> Option<NaiveDate> {
-    let c = match s.chars().next() {
-        None => return None,
-        Some(ch) => ch,
-    };
+    let c = s.chars().next()?;
     if c.is_ascii_digit() {
         let dt = next_word(s);
         match utils::parse_date(dt, base) {

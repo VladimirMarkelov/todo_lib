@@ -402,6 +402,24 @@ fn is_absolute(name: &str) -> bool {
     matches!(name, "today" | "tomorrow" | "tmr" | "tm" | "yesterday" | "overdue")
 }
 
+fn month_to_index(name: &str) -> u32 {
+    match name {
+        "jan" | "january" => 1,
+        "feb" | "february" => 2,
+        "mar" | "march" => 3,
+        "apr" | "april" => 4,
+        "may" => 5,
+        "jun" | "june" => 6,
+        "jul" | "july" => 7,
+        "aug" | "august" => 8,
+        "sep" | "september" => 9,
+        "oct" | "october" => 10,
+        "nov" | "november" => 11,
+        "dec" | "december" => 12,
+        _ => unreachable!(),
+    }
+}
+
 fn special_time_point(base: NaiveDate, human: &str, back: bool, soon_days: u8) -> HumanResult {
     let s = human.replace(&['-', '_'][..], "").to_lowercase();
     if back && is_absolute(human) {
@@ -415,6 +433,23 @@ fn special_time_point(base: NaiveDate, human: &str, back: bool, soon_days: u8) -
         "soon" => {
             let dur = Duration::days(soon_days as i64);
             Ok(if back { base - dur } else { base + dur })
+        }
+        "jan" | "january" | "feb" | "february" | "mar" | "march" | "apr" | "april" | "may" | "jun" | "june" | "jul"
+        | "july" | "aug" | "august" | "sep" | "september" | "oct" | "october" | "nov" | "november" | "dec"
+        | "december" => {
+            let y = base.year();
+            let m_idx = month_to_index(&s);
+            if back {
+                if base.month() == m_idx && base.day() > 1 {
+                    Ok(NaiveDate::from_ymd_opt(y, m_idx, 1).unwrap_or(base))
+                } else {
+                    Ok(NaiveDate::from_ymd_opt(y - 1, m_idx, 1).unwrap_or(base))
+                }
+            } else if base.month() < m_idx {
+                Ok(NaiveDate::from_ymd_opt(y, m_idx, 1).unwrap_or(base))
+            } else {
+                Ok(NaiveDate::from_ymd_opt(y + 1, m_idx, 1).unwrap_or(base))
+            }
         }
         "first" => {
             let mut y = base.year();
@@ -1583,6 +1618,46 @@ mod humandate_test {
         for test in tests.iter() {
             let res = calendar_last_day(test.td, &test.rng, test.sunday);
             assert_eq!(res, test.res, "{} - SUN: {}, RANGE: {:?}", test.td, test.sunday, test.rng);
+        }
+    }
+    #[test]
+    fn months_test() {
+        struct TestCal {
+            val: &'static str,
+            base: &'static str,
+            res: &'static str,
+        }
+        let tests: Vec<TestCal> = vec![
+            TestCal { val: "jan", base: "2001-02-03", res: "2002-01-01" },
+            TestCal { val: "january", base: "2001-01-01", res: "2002-01-01" },
+            TestCal { val: "feb", base: "2001-02-03", res: "2002-02-01" },
+            TestCal { val: "february", base: "2001-01-12", res: "2001-02-01" },
+            TestCal { val: "mar", base: "2001-03-04", res: "2002-03-01" },
+            TestCal { val: "march", base: "2001-01-12", res: "2001-03-01" },
+            TestCal { val: "apr", base: "2001-04-04", res: "2002-04-01" },
+            TestCal { val: "april", base: "2001-01-12", res: "2001-04-01" },
+            TestCal { val: "may", base: "2001-05-04", res: "2002-05-01" },
+            TestCal { val: "may", base: "2001-01-12", res: "2001-05-01" },
+            TestCal { val: "jun", base: "2001-06-04", res: "2002-06-01" },
+            TestCal { val: "june", base: "2001-01-12", res: "2001-06-01" },
+            TestCal { val: "jul", base: "2001-07-04", res: "2002-07-01" },
+            TestCal { val: "july", base: "2001-01-12", res: "2001-07-01" },
+            TestCal { val: "aug", base: "2001-08-04", res: "2002-08-01" },
+            TestCal { val: "august", base: "2001-01-12", res: "2001-08-01" },
+            TestCal { val: "sep", base: "2001-09-04", res: "2002-09-01" },
+            TestCal { val: "september", base: "2001-01-12", res: "2001-09-01" },
+            TestCal { val: "oct", base: "2001-10-04", res: "2002-10-01" },
+            TestCal { val: "october", base: "2001-01-12", res: "2001-10-01" },
+            TestCal { val: "nov", base: "2001-11-04", res: "2002-11-01" },
+            TestCal { val: "november", base: "2001-01-12", res: "2001-11-01" },
+            TestCal { val: "dec", base: "2001-12-04", res: "2002-12-01" },
+            TestCal { val: "december", base: "2001-01-12", res: "2001-12-01" },
+        ];
+        for test in tests.iter() {
+            let base = NaiveDate::parse_from_str(test.base, "%Y-%m-%d").unwrap();
+            let expect = NaiveDate::parse_from_str(test.res, "%Y-%m-%d").unwrap();
+            let res = special_time_point(base, test.val, false, 0).unwrap();
+            assert_eq!(res, expect, "{} for base {} should be {}, got {res}", test.val, test.base, test.res);
         }
     }
 }

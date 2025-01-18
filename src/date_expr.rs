@@ -213,10 +213,7 @@ fn parse_single_day(s: &str) -> Option<&str> {
 
 // Special date: tue, today, tomorrow etc
 fn parse_special(s: &str) -> Option<&str> {
-    let c = match s.chars().next() {
-        None => return None,
-        Some(cc) => cc,
-    };
+    let c = s.chars().next()?;
     if !c.is_ascii_lowercase() && !c.is_ascii_uppercase() {
         return None;
     }
@@ -235,10 +232,7 @@ fn parse_special(s: &str) -> Option<&str> {
 
 // Duration: ##D (1-2 digits and duration type DWMY)
 fn parse_duration(s: &str) -> Option<&str> {
-    let c = match s.chars().next() {
-        None => return None,
-        Some(cc) => cc,
-    };
+    let c = s.chars().next()?;
     let durs = ['d', 'D', 'w', 'W', 'm', 'M', 'y', 'Y'];
     if c.is_ascii_digit() {
         let idxl = match s.find(|c: char| !c.is_ascii_digit()) {
