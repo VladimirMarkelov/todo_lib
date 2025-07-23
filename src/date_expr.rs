@@ -318,7 +318,7 @@ fn parse_expression(s: &str) -> Result<Vec<ExprItem>, String> {
             None => return Err("Internal error".to_string()),
         };
         if c != '-' && c != '+' {
-            return Err(format!("Invalid character '{0}'", c));
+            return Err(format!("Invalid character '{c}'"));
         }
         st = &st[1..];
         match parse_duration(st) {

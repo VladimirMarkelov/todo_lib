@@ -120,10 +120,7 @@ fn try_read_date(s: &str, base: NaiveDate) -> Option<NaiveDate> {
     let c = s.chars().next()?;
     if c.is_ascii_digit() {
         let dt = next_word(s);
-        match utils::parse_date(dt, base) {
-            Err(_) => None,
-            Ok(d) => Some(d),
-        }
+        utils::parse_date(dt, base).ok()
     } else {
         None
     }

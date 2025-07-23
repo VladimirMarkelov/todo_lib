@@ -234,7 +234,7 @@ fn filter_regex(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
     if c.use_regex {
         let rx = match Regex::new(&format!("(?i){rx}")) {
             Err(e) => {
-                eprintln!("Invalid regex: {}", e);
+                eprintln!("Invalid regex: {e}");
                 return v;
             }
             Ok(v) => v,

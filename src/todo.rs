@@ -286,7 +286,7 @@ pub fn archive(tasks: &TaskSlice, filename: &Path) -> Result<(), terr::TodoError
 ///
 /// * `tasks` - the full list of todos
 /// * `ids` - the list of todo IDs that must be clones. Invalid IDs (e.g, ID
-///     greater than the number of items in `tasks`) are skipped
+///   greater than the number of items in `tasks`) are skipped
 ///
 /// Returns the list of cloned todos. Size of the list is equal to or less than
 /// size of `ids` vector
@@ -306,8 +306,8 @@ pub fn clone_tasks(tasks: &TaskSlice, ids: &IDSlice) -> TaskVec {
 ///
 /// * `tasks` - a list of todos for adding a new item
 /// * `c` - information about new todo. At this moment only `subject` field
-///     is used - it should contains all info including due date, priority etc.
-///     The `subject` field should be in todo.txt format
+///   is used - it should contains all info including due date, priority etc.
+///   The `subject` field should be in todo.txt format
 ///
 /// Returns:
 /// * INVALID_ID if the subject is empty or cannot be parsed as todo.txt entry
@@ -378,7 +378,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
 ///
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be completed. If it is `None`
-///     the entire task list is marked completed
+///   the entire task list is marked completed
 /// * `completion_config` = how additional fields are set during completion (see todotxt::CompletionConfig)
 ///
 /// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
@@ -399,7 +399,7 @@ pub fn done(tasks: &mut TaskVec, ids: Option<&IDVec>, completion_config: todotxt
 ///
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be undone. If it is `None`
-///     the entire task list is marked undone.
+///   the entire task list is marked undone.
 /// * `completion_mode` = what to do with a priority on completion (see todotxt::CompletionMode)
 ///
 /// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
@@ -415,7 +415,7 @@ pub fn undone(tasks: &mut TaskVec, ids: Option<&IDVec>, mode: todotxt::Completio
 ///
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be removed. If it is `None`
-///     the task list is cleared.
+///   the task list is cleared.
 ///
 /// Returns a list of boolean values: a value per each ID in `ids` or `tasks`.
 /// The length of the result list equals either length of `ids`(if `ids` is
@@ -742,14 +742,14 @@ fn update_hashtags(task: &mut todotxt::Task, c: &Conf) -> bool {
 /// - for subject: set a new subject;
 /// - for due date: remove or set a new one;
 /// - for recurrence: remove or set a new one (setting recurrence clears
-///     `done` flag;
+///   `done` flag;
 /// - for project: add a new, remove old, replace old with new one;
 /// - for context: add a new, remove old, replace old with new one;
 /// - for an arbitrary tag: add a new, remove old, replace old with a new one;
 ///
 /// * `tasks` - the task list
 /// * `ids` - the list of todo IDs which should be undone. If it is `None`
-///     the entire task list is marked undone.
+///   the entire task list is marked undone.
 /// * `c` - what to modify and how
 ///
 /// if `c` contains a new subject then only the first todo from `ids` is

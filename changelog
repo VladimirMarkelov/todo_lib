@@ -1,3 +1,6 @@
+2025-07-22 - version 8.2.0
+[*] Switch to Rust 2024 edition
+[*] Fix Clippy warnings
 2025-01-17 - version 8.1.0
 [+] Added new special dates: month names. It is possible to use short (3
     letter names and full month names when setting due and other dates. Also

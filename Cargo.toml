@@ -1,8 +1,8 @@
 [package]
 name = "todo_lib"
-version = "8.1.0"
+version = "8.2.0"
 authors = ["Vladimir Markelov <vmatroskin@gmail.com>"]
-edition = "2021"
+edition = "2024"
 keywords = ["todotxt"]
 license = "MIT"
 description = "Collection of utilities for todo.txt format"
