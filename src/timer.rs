@@ -19,11 +19,7 @@ pub fn spent_time(task: &todotxt::Task) -> chrono::Duration {
     }
 
     if let Some(sp) = task.tags.get(todo::SPENT_TAG) {
-        if let Ok(n) = sp.parse::<i64>() {
-            chrono::Duration::seconds(n)
-        } else {
-            chrono::Duration::seconds(0)
-        }
+        if let Ok(n) = sp.parse::<i64>() { chrono::Duration::seconds(n) } else { chrono::Duration::seconds(0) }
     } else {
         chrono::Duration::seconds(0)
     }

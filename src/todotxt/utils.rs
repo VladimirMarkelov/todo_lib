@@ -32,11 +32,7 @@ pub fn days_in_month(y: i32, m: u32) -> u32 {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
         2 => {
             if y % 4 == 0 {
-                if y % 100 == 0 && y % 400 != 0 {
-                    28
-                } else {
-                    29
-                }
+                if y % 100 == 0 && y % 400 != 0 { 28 } else { 29 }
             } else {
                 28
             }
@@ -78,11 +74,7 @@ pub fn split_tag(s: &str) -> Option<(&str, &str)> {
         return None;
     }
     if let Some(pos) = s.find(':') {
-        if pos > 0 && pos < s.len() - 1 {
-            Some((&s[..pos], &s[pos + 1..]))
-        } else {
-            None
-        }
+        if pos > 0 && pos < s.len() - 1 { Some((&s[..pos], &s[pos + 1..])) } else { None }
     } else {
         None
     }
@@ -109,35 +101,19 @@ pub fn str_to_priority(s: &str) -> u8 {
     if s.len() > 1 {
         return NO_PRIORITY;
     }
-    if let Some(c) = s.chars().next() {
-        char_to_priority(c)
-    } else {
-        NO_PRIORITY
-    }
+    if let Some(c) = s.chars().next() { char_to_priority(c) } else { NO_PRIORITY }
 }
 
 pub fn char_to_priority(c: char) -> u8 {
-    if c.is_ascii_uppercase() {
-        c as u8 - b'A'
-    } else {
-        NO_PRIORITY
-    }
+    if c.is_ascii_uppercase() { c as u8 - b'A' } else { NO_PRIORITY }
 }
 
 pub fn priority_to_char(priority: u8) -> char {
-    if priority >= NO_PRIORITY {
-        ' '
-    } else {
-        (b'A' + priority) as char
-    }
+    if priority >= NO_PRIORITY { ' ' } else { (b'A' + priority) as char }
 }
 
 pub fn format_priority(priority: u8) -> String {
-    if priority >= NO_PRIORITY {
-        String::new()
-    } else {
-        format!("({})", priority_to_char(priority))
-    }
+    if priority >= NO_PRIORITY { String::new() } else { format!("({})", priority_to_char(priority)) }
 }
 
 /// Input string must a date in format "Year-Month-Day".
@@ -353,11 +329,7 @@ impl Recurrence {
                 if (last && mx != d) || (mx < d) {
                     d = mx;
                 }
-                if let Some(d) = NaiveDate::from_ymd_opt(y, m, d) {
-                    d
-                } else {
-                    base
-                }
+                if let Some(d) = NaiveDate::from_ymd_opt(y, m, d) { d } else { base }
             }
             Period::Year => {
                 let y = base.year() + self.count as i32;
@@ -367,11 +339,7 @@ impl Recurrence {
                 if (last && mx != d) || (mx < d) {
                     d = mx;
                 }
-                if let Some(d) = NaiveDate::from_ymd_opt(y, m, d) {
-                    d
-                } else {
-                    base
-                }
+                if let Some(d) = NaiveDate::from_ymd_opt(y, m, d) { d } else { base }
             }
         }
     }

@@ -221,11 +221,7 @@ fn parse_special(s: &str) -> Option<&str> {
         None => Some(s),
         Some(idx) => {
             let rest = &s[idx..];
-            if !rest.starts_with('-') && !rest.starts_with('+') {
-                None
-            } else {
-                Some(&s[..idx])
-            }
+            if !rest.starts_with('-') && !rest.starts_with('+') { None } else { Some(&s[..idx]) }
         }
     }
 }
@@ -248,11 +244,7 @@ fn parse_duration(s: &str) -> Option<&str> {
                     Some(s)
                 } else {
                     let rest = &s[idxl + 1..];
-                    if rest.starts_with('-') || rest.starts_with('+') {
-                        Some(&s[..idxl + 1])
-                    } else {
-                        None
-                    }
+                    if rest.starts_with('-') || rest.starts_with('+') { Some(&s[..idxl + 1]) } else { None }
                 }
             } else {
                 None
@@ -271,11 +263,7 @@ fn parse_duration(s: &str) -> Option<&str> {
             }
             Some(idx) => {
                 let rest = &s[idx..];
-                if rest.starts_with('-') || rest.starts_with('+') {
-                    Some(&s[..idx])
-                } else {
-                    None
-                }
+                if rest.starts_with('-') || rest.starts_with('+') { Some(&s[..idx]) } else { None }
             }
         }
     } else {

@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
-use todo_lib::todo::{done, edit, Action, Conf, DateTagChange, NewDateValue};
-use todo_lib::todotxt::{business_days_between, CompletionConfig, CompletionDateMode, CompletionMode, Task};
+use todo_lib::todo::{Action, Conf, DateTagChange, NewDateValue, done, edit};
+use todo_lib::todotxt::{CompletionConfig, CompletionDateMode, CompletionMode, Task, business_days_between};
 
 #[test]
 fn parse_tasks_simple() {

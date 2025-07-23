@@ -51,11 +51,7 @@ fn parse_int(s: &str) -> (&str, String) {
 impl CalendarRange {
     /// Creates calendar range from a string.
     pub fn parse(s: &str) -> Result<CalendarRange, terr::TodoError> {
-        if s.contains("..") || s.contains(':') {
-            CalendarRange::parse_range(s)
-        } else {
-            CalendarRange::parse_single(s)
-        }
+        if s.contains("..") || s.contains(':') { CalendarRange::parse_range(s) } else { CalendarRange::parse_single(s) }
     }
 
     fn parse_single_num(s_in: &str) -> Result<(&str, i8, bool), terr::TodoError> {
@@ -68,7 +64,7 @@ impl CalendarRange {
             match num_str.parse::<i8>() {
                 Ok(n) => n,
                 Err(_) => {
-                    return Err(terr::TodoError::InvalidValue(s_in.to_string(), "calendar range value".to_string()))
+                    return Err(terr::TodoError::InvalidValue(s_in.to_string(), "calendar range value".to_string()));
                 }
             }
         };
@@ -166,11 +162,7 @@ fn days_in_month(y: i32, m: u32) -> u32 {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
         2 => {
             if y % 4 == 0 {
-                if y % 100 == 0 && y % 400 != 0 {
-                    28
-                } else {
-                    29
-                }
+                if y % 100 == 0 && y % 400 != 0 { 28 } else { 29 }
             } else {
                 28
             }
@@ -378,11 +370,7 @@ fn no_year_date(base: NaiveDate, human: &str) -> HumanResult {
                 return Err(format!("day number must be between 1 and 31 ({n})"));
             }
             let mx = days_in_month(y, m);
-            if n > mx {
-                mx
-            } else {
-                n
-            }
+            if n > mx { mx } else { n }
         }
     };
     let dt = NaiveDate::from_ymd_opt(y, m, d).unwrap_or(base);
@@ -901,11 +889,7 @@ pub fn calendar_last_day(today: NaiveDate, rng: &CalendarRange, first_sunday: bo
                 return add_years(today, n as u32, false);
             }
             let dt = NaiveDate::from_ymd_opt(today.year(), 12, 31).unwrap_or(today);
-            if n <= 1 {
-                dt
-            } else {
-                add_years(dt, (n - 1) as u32, false)
-            }
+            if n <= 1 { dt } else { add_years(dt, (n - 1) as u32, false) }
         }
         CalendarRangeType::YearRange(_, n) => {
             if rng.strict {
