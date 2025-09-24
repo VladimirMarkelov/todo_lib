@@ -1,3 +1,9 @@
+2025-09-24 - version 9.0.0
+[*] Compiles with Rust 1.90 without warnings (now the code uses Rust 1.88+
+	features like `&&`-chaining lets in if statements)
+[*] Fix clippy warnings
+[*] Since this release all URIs (words that contain `://` like `https://` are
+	ignored by tag parser and treated as plain text
 2025-07-22 - version 8.2.0
 [*] Switch to Rust 2024 edition
 [*] Fix Clippy warnings

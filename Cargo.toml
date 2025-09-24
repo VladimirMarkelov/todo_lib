@@ -1,6 +1,6 @@
 [package]
 name = "todo_lib"
-version = "8.2.0"
+version = "9.0.0"
 authors = ["Vladimir Markelov <vmatroskin@gmail.com>"]
 edition = "2024"
 keywords = ["todotxt"]
