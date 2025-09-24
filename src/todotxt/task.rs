@@ -131,31 +131,31 @@ impl Task {
         let mut old_tags: Vec<String> = Vec::new();
         let mut new_tags: Vec<String> = Vec::new();
         for (name, value) in &self.tags {
-            if name == "rec" {
-                if let Ok(rec) = value.parse::<utils::Recurrence>() {
-                    self.recurrence = Some(rec);
+            if name == "rec"
+                && let Ok(rec) = value.parse::<utils::Recurrence>()
+            {
+                self.recurrence = Some(rec);
+            }
+            if name == "t"
+                && let Ok(dt) = utils::parse_date(value, base)
+            {
+                self.threshold_date = Some(dt);
+                let old_tag = format!("{name}:{value}");
+                let new_tag = format!("{name}:{0}", utils::format_date(dt));
+                if old_tag != new_tag {
+                    old_tags.push(old_tag);
+                    new_tags.push(new_tag);
                 }
             }
-            if name == "t" {
-                if let Ok(dt) = utils::parse_date(value, base) {
-                    self.threshold_date = Some(dt);
-                    let old_tag = format!("{name}:{value}");
-                    let new_tag = format!("{name}:{0}", utils::format_date(dt));
-                    if old_tag != new_tag {
-                        old_tags.push(old_tag);
-                        new_tags.push(new_tag);
-                    }
-                }
-            }
-            if name == "due" {
-                if let Ok(dt) = utils::parse_date(value, base) {
-                    self.due_date = Some(dt);
-                    let old_tag = format!("{name}:{value}");
-                    let new_tag = format!("{name}:{0}", utils::format_date(dt));
-                    if old_tag != new_tag {
-                        old_tags.push(old_tag);
-                        new_tags.push(new_tag);
-                    }
+            if name == "due"
+                && let Ok(dt) = utils::parse_date(value, base)
+            {
+                self.due_date = Some(dt);
+                let old_tag = format!("{name}:{value}");
+                let new_tag = format!("{name}:{0}", utils::format_date(dt));
+                if old_tag != new_tag {
+                    old_tags.push(old_tag);
+                    new_tags.push(new_tag);
                 }
             }
         }

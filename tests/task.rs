@@ -111,11 +111,12 @@ fn parse_tasks_tags() {
             hk: vec!["rec", "due", "t"],
             hv: vec!["2w", "2020-03-17", "2020-04-15"],
         },
+        Test { i: "task rec:2w due:230 14:20 end", o: "=", hk: vec!["rec", "due", "14"], hv: vec!["2w", "230", "20"] },
         Test {
-            i: "task rec:2w due:230 14:20 end",
-            o: "task rec:2w due:230 14:20 end",
-            hk: vec!["rec", "due", "14"],
-            hv: vec!["2w", "230", "20"],
+            i: "task rec:2w https://www.example.com 14:20 end https:/some",
+            o: "=",
+            hk: vec!["rec", "14", "https"],
+            hv: vec!["2w", "20", "/some"],
         },
     ];
     let base = NaiveDate::from_ymd_opt(2020, 3, 15).unwrap();
@@ -126,6 +127,7 @@ fn parse_tasks_tags() {
         } else {
             assert!(d.hk.len() == t.tags.len(), "{}", d.i);
         }
+        assert_eq!(t.tags.len(), d.hk.len());
         for (k, v) in d.hk.iter().zip(d.hv.iter()) {
             let val = t.tags.get(*k);
             assert!(val.is_some(), "{} - {}", d.i, k);

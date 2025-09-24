@@ -69,14 +69,19 @@ pub fn business_days_between(start: NaiveDate, end: NaiveDate) -> i64 {
 /// Input string must be a correct tag: "name:value", where name contains only alpha-numeric
 /// characters(Unicode letters are supported), and value is a non-empty string.
 /// If a string is incorrect tag, the function returns None.
+/// If a string is an URI (e.g, http:// or file://), the function return None.
 pub fn split_tag(s: &str) -> Option<(&str, &str)> {
     if s.is_empty() {
         return None;
     }
-    if let Some(pos) = s.find(':') {
-        if pos > 0 && pos < s.len() - 1 { Some((&s[..pos], &s[pos + 1..])) } else { None }
+    let pos = s.find(':')?;
+    if pos == 0 || pos >= s.len() - 1 {
+        return None;
+    };
+    if let Some(pos_uri) = s.find("://") {
+        if pos_uri <= pos { None } else { Some((&s[..pos], &s[pos + 1..])) }
     } else {
-        None
+        Some((&s[..pos], &s[pos + 1..]))
     }
 }
 

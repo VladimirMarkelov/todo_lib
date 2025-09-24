@@ -271,7 +271,7 @@ fn parse_duration(s: &str) -> Option<&str> {
     }
 }
 
-fn parse_base_date(s: &str) -> Result<ExprItem, String> {
+fn parse_base_date(s: &str) -> Result<ExprItem<'_>, String> {
     if let Some(st) = parse_special(s) {
         return Ok(ExprItem { sign: '+', val: st });
     }
@@ -287,7 +287,7 @@ fn parse_base_date(s: &str) -> Result<ExprItem, String> {
     Err("Failed to parse base date".to_string())
 }
 
-fn parse_expression(s: &str) -> Result<Vec<ExprItem>, String> {
+fn parse_expression(s: &str) -> Result<Vec<ExprItem<'_>>, String> {
     let mut items = Vec::new();
     let mut st = match parse_base_date(s) {
         Err(e) => return Err(e),

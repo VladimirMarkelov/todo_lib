@@ -563,15 +563,15 @@ fn update_thr_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) 
 fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
     match c.recurrence.action {
         Action::Set => {
-            if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence.value) {
-                if let Some(nr) = &c.recurrence.value {
-                    let new_rec = format!("{nr}");
-                    let updated = task.update_tag(&new_rec);
-                    if updated && task.finished {
-                        task.uncomplete(c.completion_mode);
-                    }
-                    return updated;
+            if !tsort::equal_opt_rec(&task.recurrence, &c.recurrence.value)
+                && let Some(nr) = &c.recurrence.value
+            {
+                let new_rec = format!("{nr}");
+                let updated = task.update_tag(&new_rec);
+                if updated && task.finished {
+                    task.uncomplete(c.completion_mode);
                 }
+                return updated;
             }
         }
         Action::Delete => {
