@@ -355,7 +355,7 @@ fn done_undone(tasks: &mut TaskVec, ids: Option<&IDVec>, c: &Conf) -> ChangedVec
                     next_task.create_date = Some(now);
                 }
                 next_task.next_dates(now);
-                let do_add = if let (Some(rec_until), Some(new_due)) = (tasks[*idx].rec_until(),next_task.due_date) {
+                let do_add = if let (Some(rec_until), Some(new_due)) = (tasks[*idx].rec_until(), next_task.due_date) {
                     rec_until > new_due
                 } else {
                     true

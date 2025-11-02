@@ -1,6 +1,8 @@
-use chrono::{NaiveDate, Days};
+use chrono::{Days, NaiveDate};
 use todo_lib::todo::{Action, Conf, DateTagChange, NewDateValue, done, edit};
-use todo_lib::todotxt::{CompletionConfig, CompletionDateMode, CompletionMode, Task, business_days_between, format_date};
+use todo_lib::todotxt::{
+    CompletionConfig, CompletionDateMode, CompletionMode, Task, business_days_between, format_date,
+};
 
 #[test]
 fn parse_tasks_simple() {
@@ -410,29 +412,34 @@ fn complete_cleanup_recurrent_until_test() {
     let mut data: Vec<Test> = Vec::new();
     let base = chrono::Local::now().date_naive();
 
-    data.push(Test{
-        i: format!("rec:+1w task due:{0} until:{1}",
-               format_date(base.checked_add_days(Days::new(2)).unwrap()),
-               format_date(base.checked_add_days(Days::new(15)).unwrap()),
-               ),
-        o: format!("rec:+1w task due:{0} until:{1}",
-               format_date(base.checked_add_days(Days::new(9)).unwrap()),
-               format_date(base.checked_add_days(Days::new(15)).unwrap()),
-               ),
+    data.push(Test {
+        i: format!(
+            "rec:+1w task due:{0} until:{1}",
+            format_date(base.checked_add_days(Days::new(2)).unwrap()),
+            format_date(base.checked_add_days(Days::new(15)).unwrap()),
+        ),
+        o: format!(
+            "rec:+1w task due:{0} until:{1}",
+            format_date(base.checked_add_days(Days::new(9)).unwrap()),
+            format_date(base.checked_add_days(Days::new(15)).unwrap()),
+        ),
     });
-    data.push(Test{
-        i: format!("rec:+1w task due:{0} until:{1}",
-               format_date(base.checked_add_days(Days::new(2)).unwrap()),
-               format_date(base.checked_add_days(Days::new(5)).unwrap()),
-               ),
+    data.push(Test {
+        i: format!(
+            "rec:+1w task due:{0} until:{1}",
+            format_date(base.checked_add_days(Days::new(2)).unwrap()),
+            format_date(base.checked_add_days(Days::new(5)).unwrap()),
+        ),
         o: String::new(),
     });
 
     for d in data.iter() {
         let t = Task::parse(&d.i, base);
         let mut tasks: Vec<Task> = vec![t];
-        let completion_config =
-            CompletionConfig { completion_mode: CompletionMode::JustMark, completion_date_mode: CompletionDateMode::AlwaysSet };
+        let completion_config = CompletionConfig {
+            completion_mode: CompletionMode::JustMark,
+            completion_date_mode: CompletionDateMode::AlwaysSet,
+        };
         let changed = done(&mut tasks, None, completion_config);
 
         assert_eq!(changed.len(), 1, "Expected 1 changed tasks, got {0}", changed.len());
