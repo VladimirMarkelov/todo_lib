@@ -118,6 +118,12 @@ fn parse_tasks_tags() {
             hk: vec!["rec", "14", "https"],
             hv: vec!["2w", "20", "/some"],
         },
+        Test {
+            i: "rec:2w task until:3m",
+            o: "rec:2w task until:2020-06-15",
+            hk: vec!["rec", "until"],
+            hv: vec!["2w", "2020-06-15"],
+        },
     ];
     let base = NaiveDate::from_ymd_opt(2020, 3, 15).unwrap();
     for d in data.iter() {

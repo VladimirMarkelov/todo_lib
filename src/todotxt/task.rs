@@ -158,6 +158,16 @@ impl Task {
                     new_tags.push(new_tag);
                 }
             }
+            if name == "until"
+                && let Ok(dt) = utils::parse_date(value, base)
+            {
+                let old_tag = format!("{name}:{value}");
+                let new_tag = format!("{name}:{0}", utils::format_date(dt));
+                if old_tag != new_tag {
+                    old_tags.push(old_tag);
+                    new_tags.push(new_tag);
+                }
+            }
         }
 
         for (old, new) in old_tags.iter().zip(new_tags.iter()) {
