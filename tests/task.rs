@@ -1,6 +1,6 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Days};
 use todo_lib::todo::{Action, Conf, DateTagChange, NewDateValue, done, edit};
-use todo_lib::todotxt::{CompletionConfig, CompletionDateMode, CompletionMode, Task, business_days_between};
+use todo_lib::todotxt::{CompletionConfig, CompletionDateMode, CompletionMode, Task, business_days_between, format_date};
 
 #[test]
 fn parse_tasks_simple() {
@@ -117,12 +117,6 @@ fn parse_tasks_tags() {
             o: "=",
             hk: vec!["rec", "14", "https"],
             hv: vec!["2w", "20", "/some"],
-        },
-        Test {
-            i: "rec:2w task until:3m",
-            o: "rec:2w task until:2020-06-15",
-            hk: vec!["rec", "until"],
-            hv: vec!["2w", "2020-06-15"],
         },
     ];
     let base = NaiveDate::from_ymd_opt(2020, 3, 15).unwrap();
@@ -404,6 +398,58 @@ fn complete_cleanup_recurrent_test() {
             &format!("{}", new_cleaned),
             d.n
         );
+    }
+}
+
+#[test]
+fn complete_cleanup_recurrent_until_test() {
+    struct Test {
+        i: String,
+        o: String,
+    }
+    let mut data: Vec<Test> = Vec::new();
+    let base = chrono::Local::now().date_naive();
+
+    data.push(Test{
+        i: format!("rec:+1w task due:{0} until:{1}",
+               format_date(base.checked_add_days(Days::new(2)).unwrap()),
+               format_date(base.checked_add_days(Days::new(15)).unwrap()),
+               ),
+        o: format!("rec:+1w task due:{0} until:{1}",
+               format_date(base.checked_add_days(Days::new(9)).unwrap()),
+               format_date(base.checked_add_days(Days::new(15)).unwrap()),
+               ),
+    });
+    data.push(Test{
+        i: format!("rec:+1w task due:{0} until:{1}",
+               format_date(base.checked_add_days(Days::new(2)).unwrap()),
+               format_date(base.checked_add_days(Days::new(5)).unwrap()),
+               ),
+        o: String::new(),
+    });
+
+    for d in data.iter() {
+        let t = Task::parse(&d.i, base);
+        let mut tasks: Vec<Task> = vec![t];
+        let completion_config =
+            CompletionConfig { completion_mode: CompletionMode::JustMark, completion_date_mode: CompletionDateMode::AlwaysSet };
+        let changed = done(&mut tasks, None, completion_config);
+
+        assert_eq!(changed.len(), 1, "Expected 1 changed tasks, got {0}", changed.len());
+        println!("{:?}", tasks);
+        if d.o.is_empty() {
+            assert_eq!(tasks.len(), 1, "Expected new task is created for {0}", d.i);
+            assert!(tasks[0].finished, "Expected the task is done: {0}", tasks[0]);
+        } else {
+            assert_eq!(tasks.len(), 2, "Expected new task is created for {0}", d.i);
+            assert_eq!(
+                &d.o,
+                &format!("{}", tasks[1]),
+                "Invalid new task [{0}], expected [{1}]",
+                &format!("{}", tasks[1]),
+                d.o
+            );
+        }
     }
 }
 

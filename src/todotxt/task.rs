@@ -509,4 +509,16 @@ impl Task {
             utils::replace_word(&mut self.subject, &format!("@{old}"), "");
         }
     }
+    pub fn rec_until(&self) -> Option<NaiveDate> {
+        if let Some(s) = self.tags.get("until") {
+            let now = chrono::Local::now().date_naive();
+            if let Ok(dt) = utils::parse_date(s, now) {
+                Some(dt)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
