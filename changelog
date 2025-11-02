@@ -1,3 +1,7 @@
+2025-11-01 - version 9.1.0
+[+] Recurrent tasks now support a new tag `until`. If a due date for the next
+    occurence exceeds `until`, the task is marked done without creating a new
+	task
 2025-09-24 - version 9.0.0
 [*] Compiles with Rust 1.90 without warnings (now the code uses Rust 1.88+
 	features like `&&`-chaining lets in if statements)

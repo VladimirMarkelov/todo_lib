@@ -93,7 +93,7 @@ Functions of this category gets a list of all todos, list of todo IDs that shoul
 Makes all todos from `ids` list that are incomplete completed.
 
 Special case: recurrent todos which contain due date and/or threshold date.
-They are marked completed, and a new todos are created with their due and threshold dates moved to the next date in the future.
+They are marked completed, and a new todos are created with their due and threshold dates moved to the next date in the future. But if a recurrent todo includes a tag `until` and its value less than the calculated due date for a new todo, a new todo is not created.
 
 ##### Remove completion mark from a todo
 
