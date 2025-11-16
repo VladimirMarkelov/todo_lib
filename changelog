@@ -1,3 +1,7 @@
+2025-11-15 - version 10.0.0
+[*] Recurrence struct lost trait `Copy` compatibility. It can be only cloned.
+[+] New recurrence type: weekly one on a selected days of week. Days of week
+    are set in the vector `weekdays` in the recurrence struct
 2025-11-01 - version 9.1.0
 [+] Recurrent tasks now support a new tag `until`. If a due date for the next
     occurence exceeds `until`, the task is marked done without creating a new
