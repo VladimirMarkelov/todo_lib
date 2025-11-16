@@ -504,16 +504,23 @@ fn next_date() {
     let data: Vec<Test> = vec![
         Test { i: "2020-01-01 test", d: "2020-01-01 test" },
         Test { i: "test t:2020-03-02 rec:+1m due:2020-03-01", d: "test t:2020-04-02 rec:+1m due:2020-04-01" },
-        Test { i: "test t:2020-02-29 rec:1m due:2020-03-01", d: "test t:2020-03-02 rec:1m due:2020-03-02" },
+        Test { i: "test t:2020-02-29 rec:1m due:2020-03-01", d: "test t:2020-03-05 rec:1m due:2020-03-05" },
         Test { i: "2020-01-01 test rec:7d", d: "2020-01-01 test rec:7d" },
         Test { i: "2020-01-01 test due:2020-01-01", d: "2020-01-01 test due:2020-01-01" },
-        Test { i: "test rec:7d due:2020-02-01", d: "test rec:7d due:2020-02-09" },
-        Test { i: "test rec:1b due:2020-02-01", d: "test rec:1b due:2020-02-03" },
-        Test { i: "test rec:7b due:2020-02-01", d: "test rec:7b due:2020-02-11" },
-        Test { i: "test rec:14b due:2020-02-01", d: "test rec:14b due:2020-02-20" },
+        Test { i: "test rec:7d due:2020-02-01", d: "test rec:7d due:2020-02-12" },
+        Test { i: "test rec:1b due:2020-02-01", d: "test rec:1b due:2020-02-06" },
+        Test { i: "test rec:7b due:2020-02-01", d: "test rec:7b due:2020-02-14" },
+        Test { i: "test rec:14b due:2020-02-01", d: "test rec:14b due:2020-02-25" },
         Test { i: "test rec:+14b due:2020-02-01", d: "test rec:+14b due:2020-02-20" },
+        Test { i: "test rec:tue,sat due:2020-02-01", d: "test rec:tue,sat due:2020-02-08" },
+        Test { i: "test rec:wed,sat due:2020-02-01", d: "test rec:wed,sat due:2020-02-05" },
+        Test { i: "test rec:mon,wed due:2020-02-01", d: "test rec:mon,wed due:2020-02-05" },
+        Test { i: "test rec:sat due:2020-02-08", d: "test rec:sat due:2020-02-15" },
+        Test { i: "test rec:mon due:2020-02-01", d: "test rec:mon due:2020-02-10" },
     ];
-    let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
+    // 2020-02-01 - Saturday
+    // 2020-02-05 - Wednesday
+    let base = NaiveDate::from_ymd_opt(2020, 2, 5).unwrap();
     for d in data.iter() {
         let mut t = Task::parse(d.i, base);
         let orig_due = t.due_date.clone();

@@ -197,10 +197,26 @@ fn recurrents() {
         Test { i: "djd", r: Recurrence::default(), e: true },
         Test { i: "rec:ad", r: Recurrence::default(), e: true },
         Test { i: "rec:10", r: Recurrence::default(), e: true },
-        Test { i: "rec:120d", r: Recurrence { period: Period::Day, count: 120, strict: false }, e: false },
-        Test { i: "rec:17w", r: Recurrence { period: Period::Week, count: 17, strict: false }, e: false },
-        Test { i: "rec:+2m", r: Recurrence { period: Period::Month, count: 2, strict: true }, e: false },
-        Test { i: "rec:+1y", r: Recurrence { period: Period::Year, count: 1, strict: true }, e: false },
+        Test {
+            i: "rec:120d",
+            r: Recurrence { period: Period::Day, count: 120, strict: false, weekdays: Vec::new() },
+            e: false,
+        },
+        Test {
+            i: "rec:17w",
+            r: Recurrence { period: Period::Week, count: 17, strict: false, weekdays: Vec::new() },
+            e: false,
+        },
+        Test {
+            i: "rec:+2m",
+            r: Recurrence { period: Period::Month, count: 2, strict: true, weekdays: Vec::new() },
+            e: false,
+        },
+        Test {
+            i: "rec:+1y",
+            r: Recurrence { period: Period::Year, count: 1, strict: true, weekdays: Vec::new() },
+            e: false,
+        },
     ];
 
     for d in data.iter() {

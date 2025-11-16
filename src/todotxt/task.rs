@@ -399,7 +399,7 @@ impl Task {
         if self.due_date.is_none() && self.threshold_date.is_none() {
             return false;
         }
-        let rec = match self.recurrence {
+        let rec = match self.recurrence.clone() {
             None => return false,
             Some(r) => r,
         };

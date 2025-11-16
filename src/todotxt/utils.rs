@@ -18,13 +18,25 @@ pub enum Period {
     Month,
     Year,
     BusinessDay,
+    Weekdays,
 }
 
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+// Recurrence for a task:
+// - Day - happens every N days
+// - Week - happens every N weeks
+// - Month - happens every N months. In this case the day is not always the same every month. E.g,
+//   if you set due date to 30 of January and 1 month recurrence, the next due date would be 28 or
+//   29 of February
+// - Year - happens every N years
+// - BusinessDay - happens every N businessdays (Sundays and Saturdays are ignored)
+// - Weekdays - happens every week on the defined list of weekdays. The weekdays in the list
+//   must be in order.
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Recurrence {
     pub period: Period,
     pub count: u8,
     pub strict: bool,
+    pub weekdays: Vec<Weekday>,
 }
 
 pub fn days_in_month(y: i32, m: u32) -> u32 {
@@ -250,7 +262,7 @@ pub fn replace_word(s: &mut String, old: &str, new: &str) {
 
 impl Default for Recurrence {
     fn default() -> Self {
-        Recurrence { period: Period::Day, count: 0, strict: false }
+        Recurrence { period: Period::Day, count: 0, strict: false, weekdays: Vec::new() }
     }
 }
 
@@ -274,15 +286,85 @@ impl std::fmt::Display for Recurrence {
             Period::Month => f.write_str("m"),
             Period::Year => f.write_str("y"),
             Period::BusinessDay => f.write_str("b"),
+            Period::Weekdays => {
+                let mut printed = false;
+                for wd in &self.weekdays {
+                    if printed {
+                        f.write_str(",")?;
+                    }
+                    match wd {
+                        Weekday::Mon => f.write_str("mon")?,
+                        Weekday::Tue => f.write_str("tue")?,
+                        Weekday::Wed => f.write_str("wed")?,
+                        Weekday::Thu => f.write_str("thu")?,
+                        Weekday::Fri => f.write_str("fri")?,
+                        Weekday::Sat => f.write_str("sat")?,
+                        Weekday::Sun => f.write_str("sun")?,
+                    }
+                    printed = true;
+                }
+                Ok(())
+            }
         }
     }
+}
+
+pub fn sort_weekdays(weekdays: &mut [Weekday]) {
+    if weekdays.len() < 2 {
+        return;
+    }
+    weekdays.sort_by_key(|a| a.num_days_from_monday());
+}
+fn is_weekdays(s: &str) -> bool {
+    let lows = s.to_lowercase();
+    lows.starts_with("mo")
+        || lows.starts_with("tu")
+        || lows.starts_with("we")
+        || lows.starts_with("th")
+        || lows.starts_with("fr")
+        || lows.starts_with("sa")
+        || lows.starts_with("su")
+}
+fn parse_weekdays(s: &str) -> Result<Vec<Weekday>, String> {
+    let lows = s.to_lowercase();
+    let mut wdays: Vec<Weekday> = Vec::new();
+    for s in lows.split(',') {
+        if "monday".starts_with(s) {
+            wdays.push(Weekday::Mon);
+        } else if "tuesday".starts_with(s) {
+            wdays.push(Weekday::Tue);
+        } else if "wednesday".starts_with(s) {
+            wdays.push(Weekday::Wed);
+        } else if "thursday".starts_with(s) {
+            wdays.push(Weekday::Thu);
+        } else if "friday".starts_with(s) {
+            wdays.push(Weekday::Fri);
+        } else if "saturday".starts_with(s) {
+            wdays.push(Weekday::Sat);
+        } else if "sunday".starts_with(s) {
+            wdays.push(Weekday::Sun);
+        } else {
+            return Err(format!("Invalid weekday '{s}'"));
+        }
+    }
+    if wdays.is_empty() {
+        return Err("Empty weekday list".to_string());
+    }
+    Ok(wdays)
 }
 
 impl Recurrence {
     pub fn parse(s: &str) -> Result<Self, String> {
         let s = if let Some(stripped) = s.strip_prefix(REC_TAG_FULL) { stripped } else { s };
         let mut rec = Recurrence::default();
-        if s.ends_with('d') {
+        if is_weekdays(s) {
+            let mut wd = parse_weekdays(s)?;
+            sort_weekdays(&mut wd);
+            rec.period = Period::Weekdays;
+            rec.weekdays = wd;
+            rec.strict = true;
+            return Ok(rec);
+        } else if s.ends_with('d') {
             rec.period = Period::Day;
         } else if s.ends_with('w') {
             rec.period = Period::Week;
@@ -345,6 +427,24 @@ impl Recurrence {
                     d = mx;
                 }
                 if let Some(d) = NaiveDate::from_ymd_opt(y, m, d) { d } else { base }
+            }
+            Period::Weekdays => {
+                if self.weekdays.is_empty() {
+                    return base;
+                }
+                let wk_base = base.weekday().num_days_from_monday();
+                let mut diff = u32::MAX;
+                for wk in &self.weekdays {
+                    if wk.num_days_from_monday() > wk_base {
+                        diff = wk.num_days_from_monday() - wk_base;
+                        break;
+                    }
+                }
+                if diff == u32::MAX {
+                    let wk = self.weekdays[0].num_days_from_monday();
+                    diff = wk + 7 - wk_base;
+                }
+                base + Duration::days(diff as i64)
             }
         }
     }

@@ -111,7 +111,7 @@ impl Default for PriorityTagChange {
 }
 
 /// Describes how the recurrency tag should be changed.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct RecurrencyTagChange {
     pub action: Action,
     pub value: Option<todotxt::Recurrence>,
