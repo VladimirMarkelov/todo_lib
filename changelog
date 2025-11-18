@@ -1,3 +1,5 @@
+2025-11-17 - version 10.0.1
+[*] Fix formatting new recurrence type(weekday-based one) to string
 2025-11-15 - version 10.0.0
 [*] Recurrence struct lost trait `Copy` compatibility. It can be only cloned.
 [+] New recurrence type: weekly one on a selected days of week. Days of week

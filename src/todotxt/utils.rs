@@ -276,10 +276,12 @@ impl std::str::FromStr for Recurrence {
 impl std::fmt::Display for Recurrence {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(REC_TAG_FULL)?;
-        if self.strict {
-            f.write_str("+")?;
+        if self.period != Period::Weekdays {
+            if self.strict {
+                f.write_str("+")?;
+            }
+            f.write_fmt(format_args!("{}", self.count))?;
         }
-        f.write_fmt(format_args!("{}", self.count))?;
         match self.period {
             Period::Day => f.write_str("d"),
             Period::Week => f.write_str("w"),
