@@ -387,7 +387,7 @@ fn no_year_date(base: NaiveDate, human: &str) -> HumanResult {
 // Returns if a special day is always either in the future or in the past. E.g., `today` cannot be in
 // the past and `yesterday` cannot be in the future, so the function returns `true` for both.
 fn is_absolute(name: &str) -> bool {
-    matches!(name, "today" | "tomorrow" | "tmr" | "tm" | "yesterday" | "overdue")
+    matches!(name, "today" | "t" | "tomorrow" | "tmr" | "tm" | "yesterday" | "overdue")
 }
 
 fn month_to_index(name: &str) -> u32 {
@@ -414,7 +414,7 @@ fn special_time_point(base: NaiveDate, human: &str, back: bool, soon_days: u8) -
         return Err(format!("'{human}' cannot be back"));
     }
     match s.as_str() {
-        "today" => Ok(base),
+        "today" | "t" => Ok(base),
         "tomorrow" | "tmr" | "tm" => Ok(base.succ_opt().unwrap_or(base)),
         "yesterday" => Ok(base.pred_opt().unwrap_or(base)),
         "overdue" => Ok(base + Duration::days(FAR_PAST)),
@@ -1028,6 +1028,7 @@ mod humandate_test {
             Test { txt: "tm", val: NaiveDate::from_ymd_opt(2020, 7, 10).unwrap() },
             Test { txt: "tomorrow", val: NaiveDate::from_ymd_opt(2020, 7, 10).unwrap() },
             Test { txt: "today", val: NaiveDate::from_ymd_opt(2020, 7, 9).unwrap() },
+            Test { txt: "t", val: NaiveDate::from_ymd_opt(2020, 7, 9).unwrap() },
             Test { txt: "first", val: NaiveDate::from_ymd_opt(2020, 8, 1).unwrap() },
             Test { txt: "last", val: NaiveDate::from_ymd_opt(2020, 7, 31).unwrap() },
             Test { txt: "mon", val: NaiveDate::from_ymd_opt(2020, 7, 13).unwrap() },
