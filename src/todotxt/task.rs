@@ -51,6 +51,12 @@ pub enum CompletionDateMode {
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
+pub struct Source {
+    pub name: String,
+    pub id: usize,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Task {
     pub subject: String,
     pub priority: u8,
@@ -64,6 +70,7 @@ pub struct Task {
     pub threshold_date: Option<NaiveDate>,
     pub recurrence: Option<utils::Recurrence>,
     pub hashtags: Vec<String>,
+    pub source: Option<Source>,
 }
 
 impl Default for Task {
@@ -81,6 +88,7 @@ impl Default for Task {
             threshold_date: None,
             recurrence: None,
             hashtags: Vec::new(),
+            source: None,
         }
     }
 }
@@ -196,6 +204,7 @@ impl Task {
             projects: utils::extract_projects(s),
             tags: utils::extract_tags(s),
             hashtags: utils::extract_hashtags(s),
+            source: None,
         };
         let mut s = s;
         if s.starts_with("x ") {
@@ -516,5 +525,8 @@ impl Task {
         } else {
             None
         }
+    }
+    pub fn set_source(&mut self, name: &str, id: usize) {
+        self.source = Some(Source{name: name.to_string(), id});
     }
 }
