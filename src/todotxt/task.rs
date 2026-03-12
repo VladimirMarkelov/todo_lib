@@ -50,9 +50,18 @@ pub enum CompletionDateMode {
     AlwaysSet,
 }
 
+/// Used only by external clients.
+/// Added to support multiple todo.txt lists. A client loads a todo.txt list and sets source for
+/// all its tasks.
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Source {
+    /// Human-readable nickname for the list. Used for filtering/sorting/displaying in a column.
+    /// A few lists can share the same nickname that allows merging lists in the output when
+    /// sorting by a source.
     pub name: String,
+    /// Internal ID - the position of the list in the list of files. Used by a client to correctly
+    /// determine what file the task belongs to (e.g, when saving or archiving).
+    /// This value must be unique for each task list.
     pub id: usize,
 }
 
@@ -527,6 +536,6 @@ impl Task {
         }
     }
     pub fn set_source(&mut self, name: &str, id: usize) {
-        self.source = Some(Source{name: name.to_string(), id});
+        self.source = Some(Source { name: name.to_string(), id });
     }
 }
