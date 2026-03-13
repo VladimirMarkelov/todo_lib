@@ -330,3 +330,26 @@ fn empty_tasks() {
         assert_eq!(ids, test.res, "{idx}. {ids:?} != {:?}", test.res);
     }
 }
+
+#[test]
+fn custom_filter_test() {
+    let t = init_tasks();
+    struct Test {
+        flt: &'static str,
+        res: todo::IDVec,
+    }
+    let tests: Vec<Test> = vec![
+        Test { flt: "subj=HOCKEY", res: vec![4] },
+        Test { flt: "subj=abcde", res: vec![] },
+        Test { flt: "prj=Family", res: vec![0, 3, 4] },
+        Test { flt: "prj=Family|prj=car", res: vec![0, 2, 3, 4] },
+        Test { flt: "prj=Family;ctx=Kids", res: vec![3, 4] },
+    ];
+    for (idx, test) in tests.iter().enumerate() {
+        let mut cflt = tfilter::Conf::default();
+        cflt.custom_filter = Some(test.flt.to_string());
+        let mut ids = tfilter::filter(&t, &cflt);
+        ids.sort();
+        assert_eq!(ids, test.res, "{idx}. {ids:?} != {:?}", test.res);
+    }
+}
