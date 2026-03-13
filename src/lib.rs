@@ -14,7 +14,9 @@
 //! Almost all the functions support group operations. Exceptions are adding a
 //! new todo record and replacing a todo record text.
 
+pub mod conv;
 pub mod date_expr;
+pub mod flt;
 pub mod human_date;
 pub mod terr;
 pub mod tfilter;

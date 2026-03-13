@@ -1,5 +1,6 @@
 use regex::Regex;
 
+use crate::flt;
 use crate::timer;
 use crate::todo;
 use crate::todotxt;
@@ -201,6 +202,8 @@ pub struct Conf {
     pub created: Option<DateRange>,
     /// Search for a finished date: any, no finish date, or withing range
     pub finished: Option<DateRange>,
+    /// Custom power filter. See flt.rs for details
+    pub custom_filter: Option<String>,
 }
 
 impl Default for Conf {
@@ -220,6 +223,7 @@ impl Default for Conf {
             tmr: None,
             created: None,
             finished: None,
+            custom_filter: None,
         }
     }
 }
@@ -575,6 +579,39 @@ fn filter_timer(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
     }
 }
 
+fn filter_custom(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVec {
+    match &c.custom_filter {
+        None => v,
+        Some(flt_str) => {
+            let mut flt_vec: Vec<flt::Filter> = Vec::new();
+            let or_char = if c.use_regex || flt_str.contains('~') { '~' } else { '|' };
+            for fstr in flt_str.split(or_char) {
+                if fstr.trim().is_empty() {
+                    continue;
+                }
+                let flt = flt::Filter::parse(fstr, c.use_regex);
+                if !flt.is_empty() {
+                    flt_vec.push(flt);
+                }
+            }
+            if flt_vec.is_empty() {
+                return v;
+            }
+            let now = chrono::Local::now().date_naive();
+            let mut new_todos: todo::IDVec = Vec::new();
+            for filter in &flt_vec {
+                for i in v.iter() {
+                    let idx = *i;
+                    if filter.matches(&tasks[idx], idx + 1, now) {
+                        new_todos.push(idx);
+                    }
+                }
+            }
+            new_todos
+        }
+    }
+}
+
 fn is_status_ok(task: &todotxt::Task, status: &TodoStatus) -> bool {
     !((*status == TodoStatus::Active && task.finished) || (*status == TodoStatus::Done && !task.finished))
 }
@@ -642,6 +679,7 @@ pub fn filter(tasks: &todo::TaskSlice, c: &Conf) -> todo::IDVec {
     v = filter_finished(tasks, v, c);
     v = filter_threshold(tasks, v, c);
     v = filter_timer(tasks, v, c);
+    v = filter_custom(tasks, v, c);
 
     v
 }
