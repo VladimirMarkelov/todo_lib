@@ -54,6 +54,9 @@ Rules `contexts`, `projects`, `hashtags`, and `tags` support special values:
 - `none` - filter todos that do not have any values (contexts=['none'] - todos without any context)
 - `any` - filter todos that have at least one value (project=['any'] - todos that belong to any project)
 
+There is a way to pass all filtering rules in a single string value (`tfilter::Conf.custom_filter`).
+Read more about custom filter usage and examples in [TTDL documentation](https://github.com/VladimirMarkelov/ttdl?tab=readme-ov-file#filter-by-anything).
+
 ## Sorting
 
 `sort(ids: &mut todo::IDVec, todos: &todo::TaskSlice, c: &Conf)`
