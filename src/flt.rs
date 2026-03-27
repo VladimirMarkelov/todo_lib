@@ -6,9 +6,9 @@ use crate::human_date;
 use crate::todotxt;
 
 const DATE_TAGS: [&str; 3] = ["started", "finished", "completed"];
-const STR_TAGS: [&str; 11] =
-    ["pri", "priority", "@", "ctx", "context", "+", "prj", "project", "proj", "subj", "subject"];
-const INT_TAGS: [&str; 2] = ["ID", "done"];
+const STR_TAGS: [&str; 12] =
+    ["pri", "priority", "@", "ctx", "context", "+", "prj", "project", "proj", "subj", "subject", "src"];
+const INT_TAGS: [&str; 3] = ["ID", "done", "src_id"];
 
 fn filter_type_by_tag(tag: &str) -> ValueType {
     if tag.ends_with("_time") {
@@ -458,6 +458,79 @@ impl FilterCond {
                     },
                 }
             }
+            "src_id" => match self {
+                FilterCond::One(self_value) => {
+                    if match_none(self_value) {
+                        return task.source.is_none();
+                    };
+                    if self_value == "any" {
+                        return task.source.is_some();
+                    };
+                    let is_negative = is_negative(self_value);
+                    let rule_value = if is_negative { &self_value[1..] } else { &self_value[..] };
+                    if rule_value == "any" {
+                        return task.source.is_none();
+                    } else if rule_value == "none" {
+                        return task.source.is_some();
+                    }
+                    let self_id = match self_value.parse::<usize>() {
+                        Err(_) => return false,
+                        Ok(n) => n,
+                    };
+                    let id = if let Some(src) = &task.source { src.id + 1 } else { return false };
+                    let eq = id == self_id;
+                    if is_negative { !eq } else { eq }
+                }
+                FilterCond::Range(bg, en) => {
+                    let (id, empty) = if let Some(src) = &task.source { (src.id + 1, false) } else { (0, true) };
+                    if empty && (match_none(bg) || match_none(en)) {
+                        return true;
+                    }
+                    let sta = if bg.is_empty() {
+                        None
+                    } else {
+                        match bg.parse::<usize>() {
+                            Err(_) => return false,
+                            Ok(n) => Some(n),
+                        }
+                    };
+                    let fin = if en.is_empty() {
+                        None
+                    } else {
+                        match en.parse::<usize>() {
+                            Err(_) => return false,
+                            Ok(n) => Some(n),
+                        }
+                    };
+                    match (sta, fin) {
+                        (None, None) => empty,
+                        (None, Some(fin_n)) => !empty && id <= fin_n,
+                        (Some(sta_n), None) => !empty && id >= sta_n,
+                        (Some(sta_n), Some(fin_n)) => !empty && id >= sta_n && id <= fin_n,
+                    }
+                }
+            },
+            "src" => match self {
+                FilterCond::One(self_value) => {
+                    if match_none(self_value) {
+                        return task.source.is_none();
+                    };
+                    if self_value == "any" {
+                        return task.source.is_some();
+                    };
+                    let is_negative = is_negative(self_value);
+                    let rule_value = if is_negative { &self_value[1..] } else { &self_value[..] };
+                    if rule_value == "any" {
+                        return task.source.is_none();
+                    } else if rule_value == "none" {
+                        return task.source.is_some();
+                    }
+                    let name = if let Some(src) = &task.source { src.name.clone() } else { String::new() };
+                    let eq = str_match(rule_value, &name, false);
+                    if is_negative { !eq } else { eq }
+                }
+                FilterCond::Range(_, _) => false,
+            },
             _ => {
                 let value = task.tags.get(name);
                 match self {

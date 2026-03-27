@@ -1,3 +1,7 @@
+2026-03-27 - version 11.1.0
+[+] Support 'src' and 'src_id' in sorting
+[+] Support 'src' and 'src_id' in filtering. Range is availabe only for
+    the field 'src_id'
 2026-03-12 - version 11.0.0
 [+] Add a source to a task - for future support of multiple todo files
 [+] Add a custom filter field to tfilter::Conf. It is a powerful filter

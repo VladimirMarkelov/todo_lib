@@ -48,6 +48,7 @@ The function gets the list of all todos and filtering rules and returns the list
 * `tmr` - selects all active todos - that have their timers running
 * `created` - selects all todos with any creation date, without creation date, a todo with creation date within range
 * `finished` - selects all todos with any finish date, without finish date, a todo with finish date within range
+* `src` and `src_id` - used to fitler by user-defined 'source' (`name` and `id` fields respectively). The main use case is multi-file task list
 
 Rules `contexts`, `projects`, `hashtags`, and `tags` support special values:
 
@@ -73,6 +74,7 @@ Because `sort` is the function that should be called after `filter`, it wants a 
     - `project` or `proj` - sort by project names, if todos have more than one project they are compared in order of appearance and shorter list of projects goes first;
     - `context` or `ctx` - sort by contexts, if todos have more than one context they are compared in order of appearance and shorter list of contexts goes first;
     - `thr` - sort by threshold date (todos that do not have threshold date are at the bottom);
+    - `src` and `src_id` - used to sort by user-defined 'source' (`name` and `id` fields respectively). The main use case is multi-file task list
 * `rev` - when it is `true` the sorted list is reversed before returning the result.
 
 ## Editing

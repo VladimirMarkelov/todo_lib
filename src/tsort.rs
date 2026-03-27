@@ -140,6 +140,11 @@ pub fn sort(ids: &mut todo::IDVec, todos: &todo::TaskSlice, c: &Conf) {
                         let b_act = timer::is_timer_on(&todos[*b]);
                         b_act.cmp(&a_act)
                     }
+                    "src" => {
+                        let a_src = if let Some(s) = &todos[*a].source { s.name.clone() } else { String::new() };
+                        let b_src = if let Some(s) = &todos[*b].source { s.name.clone() } else { String::new() };
+                        a_src.cmp(&b_src)
+                    }
                     _ => Ordering::Equal,
                 };
 
