@@ -1,3 +1,8 @@
+2026-04-22 - version 11.2.0
+[*] FilterCond: use ANY/NONE semantics for context, project and
+    hashtag filters on multi-value tasks. `@=foo` now matches when
+    any element equals foo (previously required all); negation
+    `-@=foo` / `@=-foo` matches when no element equals foo.
 2026-03-27 - version 11.1.0
 [+] Support 'src' and 'src_id' in sorting
 [+] Support 'src' and 'src_id' in filtering. Range is availabe only for

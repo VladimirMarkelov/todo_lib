@@ -406,16 +406,17 @@ impl FilterCond {
                         } else {
                             let is_negative = is_negative(self_value);
                             let rule_value = if is_negative { &self_value[1..] } else { &self_value[..] };
-                            let mut all_matched = !values.is_empty();
-                            for val in values {
-                                let matched = str_match(rule_value, val, use_regex);
-                                if is_negative {
-                                    all_matched = all_matched && !matched;
-                                } else {
-                                    all_matched = all_matched && matched
-                                }
+                            // Contexts, projects and hashtags are set-valued: a task
+                            // typically has a handful, and `@=foo` asks "does the
+                            // set contain foo?" (ANY), not "does every element of
+                            // the set equal foo?" (ALL).  Negation then means
+                            // "does no element equal foo?" (NONE) — which is
+                            // vacuously true for an empty set.
+                            if is_negative {
+                                values.iter().all(|v| !str_match(rule_value, v, use_regex))
+                            } else {
+                                values.iter().any(|v| str_match(rule_value, v, use_regex))
                             }
-                            all_matched
                         }
                     }
                     FilterCond::Range(_be, _en) => {
@@ -792,7 +793,12 @@ mod tests {
             Test { f: "#=th*", o: vec![1, 4] },
             Test { f: "#=*is", o: vec![1] },
             Test { f: "#=this,that", o: vec![1, 4] },
-            Test { f: "#=-that", o: vec![1] },
+            // `#=-that` is NONE-semantics: admit tasks whose hashtag set does
+            // not contain "that". Tasks 2,3,5,6 have no hashtags at all, so
+            // vacuously admit. (Prior to the ANY/NONE rewrite this fold was
+            // ALL-of-NOT with an initial `!values.is_empty()`, which silently
+            // rejected tasks with no hashtags from negated hashtag filters.)
+            Test { f: "#=-that", o: vec![1, 2, 3, 5, 6] },
             Test { f: "@=ctx1,ctx2,ctx3", o: vec![2, 3, 6] },
             Test { f: "ctx=ctx1,ctx2,ctx3", o: vec![2, 3, 6] },
             Test { f: "context=ctx1,ctx2,ctx3", o: vec![2, 3, 6] },
@@ -829,6 +835,77 @@ mod tests {
             for (idx, task) in task_vec.iter().enumerate() {
                 if flt.matches(task, idx + 1, base) {
                     res.push(idx + 1);
+                }
+            }
+            assert_eq!(res, t.o, "{idx}. {0}: expected {1:?}, got {2:?}", t.f, t.o, res);
+        }
+    }
+
+    /// Contexts, projects and hashtags are set-valued on a task.
+    /// `@=foo` must be read as "set contains foo" (ANY), and `@=-foo` /
+    /// `-@=foo` as "set does not contain foo" (NONE).  Prior to the ANY/NONE
+    /// rewrite these folds were ALL/ALL-of-NOT, which silently rejected
+    /// multi-context tasks from positive filters and silently admitted them
+    /// through rule-level negated filters.
+    #[test]
+    fn multi_value_filter_test() {
+        let tasks: Vec<&'static str> = vec![
+            "task1 @ctx1",         // 1 - single context
+            "task2 @ctx1 @ctx2",   // 2 - multi, contains ctx2
+            "task3 @ctx3 @ctx1",   // 3 - multi, no ctx2
+            "task4",               // 4 - no contexts
+            "task5 +proj1 +proj2", // 5 - multi projects, no context
+            "task6 #tag1 #tag2",   // 6 - multi hashtags
+        ];
+        let mut task_vec: Vec<todotxt::Task> = Vec::new();
+        let base = NaiveDate::from_ymd_opt(2020, 2, 2).unwrap();
+        for t in &tasks {
+            task_vec.push(todotxt::Task::parse(t, base));
+        }
+
+        struct Test {
+            f: &'static str,
+            o: Vec<usize>,
+        }
+        let tests: Vec<Test> = vec![
+            // Inclusion — ANY semantics.
+            // @=ctx2 must admit a multi-context task that contains @ctx2.
+            Test { f: "@=ctx2", o: vec![2] },
+            // @=ctx1 admits both the single- and multi-context tasks that carry @ctx1.
+            Test { f: "@=ctx1", o: vec![1, 2, 3] },
+            // Rule-level negation — NONE semantics.
+            // -@=ctx2 must reject a multi-context task that carries @ctx2,
+            // but admit tasks that have no @ctx2 (including tasks with no contexts).
+            Test { f: "-@=ctx2", o: vec![1, 3, 4, 5, 6] },
+            // Value-level negation — same NONE semantics as rule-level.
+            Test { f: "@=-ctx2", o: vec![1, 3, 4, 5, 6] },
+            // Vacuous NONE on an empty set — a task with no contexts is
+            // admitted by any negated context filter.
+            Test { f: "-@=anything", o: vec![1, 2, 3, 4, 5, 6] },
+            // Projects: ANY and NONE symmetry.
+            Test { f: "+=proj1", o: vec![5] },
+            Test { f: "-+=proj1", o: vec![1, 2, 3, 4, 6] },
+            // Hashtags: ANY and NONE symmetry.
+            Test { f: "#=tag1", o: vec![6] },
+            Test { f: "-#=tag1", o: vec![1, 2, 3, 4, 5] },
+            // OR across filter values still works:
+            // task 2 has ctx2, task 3 has ctx3, both match.
+            Test { f: "@=ctx2,ctx3", o: vec![2, 3] },
+            // Composed AND: has @ctx1 AND not @ctx2 → task 1, task 3.
+            Test { f: "@=ctx1;-@=ctx2", o: vec![1, 3] },
+            // Bare shortcut combos exercise rule-level negation on top of the
+            // `"any"` branch (not the specific-value path): `-@` = has no context,
+            // `-+` = has no project.
+            Test { f: "+;-@", o: vec![5] },
+            Test { f: "-+;-@", o: vec![4, 6] },
+        ];
+        for (idx, t) in tests.iter().enumerate() {
+            let flt = Filter::parse(t.f, false);
+            assert!(!flt.is_empty(), "Failed to parse {0}", t.f);
+            let mut res: Vec<usize> = Vec::new();
+            for (i, task) in task_vec.iter().enumerate() {
+                if flt.matches(task, i + 1, base) {
+                    res.push(i + 1);
                 }
             }
             assert_eq!(res, t.o, "{idx}. {0}: expected {1:?}, got {2:?}", t.f, t.o, res);
