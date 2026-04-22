@@ -893,6 +893,11 @@ mod tests {
             Test { f: "@=ctx2,ctx3", o: vec![2, 3] },
             // Composed AND: has @ctx1 AND not @ctx2 → task 1, task 3.
             Test { f: "@=ctx1;-@=ctx2", o: vec![1, 3] },
+            // Bare shortcut combos exercise rule-level negation on top of the
+            // `"any"` branch (not the specific-value path): `-@` = has no context,
+            // `-+` = has no project.
+            Test { f: "+;-@", o: vec![5] },
+            Test { f: "-+;-@", o: vec![4, 6] },
         ];
         for (idx, t) in tests.iter().enumerate() {
             let flt = Filter::parse(t.f, false);
