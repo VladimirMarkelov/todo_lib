@@ -392,30 +392,20 @@ fn filter_priority(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::I
             for i in v.iter() {
                 let idx = *i;
                 match p.span {
-                    ValueSpan::None => {
-                        if tasks[idx].priority == todotxt::NO_PRIORITY {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::None if tasks[idx].priority == todotxt::NO_PRIORITY => {
+                        new_v.push(idx);
                     }
-                    ValueSpan::Equal => {
-                        if p.value == tasks[idx].priority {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::Equal if p.value == tasks[idx].priority => {
+                        new_v.push(idx);
                     }
-                    ValueSpan::Lower => {
-                        if p.value <= tasks[idx].priority {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::Lower if p.value <= tasks[idx].priority => {
+                        new_v.push(idx);
                     }
-                    ValueSpan::Higher => {
-                        if p.value >= tasks[idx].priority {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::Higher if p.value >= tasks[idx].priority => {
+                        new_v.push(idx);
                     }
-                    ValueSpan::Any => {
-                        if tasks[idx].priority < todotxt::NO_PRIORITY {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::Any if tasks[idx].priority < todotxt::NO_PRIORITY => {
+                        new_v.push(idx);
                     }
                     _ => {}
                 }
@@ -433,15 +423,11 @@ fn filter_recurrence(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo:
             for i in v.iter() {
                 let idx = *i;
                 match r.span {
-                    ValueSpan::None => {
-                        if tasks[idx].recurrence.is_none() {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::None if tasks[idx].recurrence.is_none() => {
+                        new_v.push(idx);
                     }
-                    ValueSpan::Any => {
-                        if tasks[idx].recurrence.is_some() {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::Any if tasks[idx].recurrence.is_some() => {
+                        new_v.push(idx);
                     }
                     _ => {}
                 }
@@ -561,15 +547,11 @@ fn filter_timer(tasks: &todo::TaskSlice, v: todo::IDVec, c: &Conf) -> todo::IDVe
             for i in v.iter() {
                 let idx = *i;
                 match r.span {
-                    ValueSpan::None => {
-                        if !timer::is_timer_on(&tasks[idx]) {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::None if !timer::is_timer_on(&tasks[idx]) => {
+                        new_v.push(idx);
                     }
-                    ValueSpan::Active => {
-                        if timer::is_timer_on(&tasks[idx]) {
-                            new_v.push(idx);
-                        }
+                    ValueSpan::Active if timer::is_timer_on(&tasks[idx]) => {
+                        new_v.push(idx);
                     }
                     _ => {}
                 }

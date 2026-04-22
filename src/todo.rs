@@ -463,29 +463,21 @@ pub fn remove(tasks: &mut TaskVec, ids: Option<&IDVec>) -> ChangedVec {
 
 fn update_priority(task: &mut todotxt::Task, c: &Conf) -> bool {
     match c.priority.action {
-        Action::Set => {
-            if task.priority != c.priority.value {
-                task.priority = c.priority.value;
-                return true;
-            }
+        Action::Set if task.priority != c.priority.value => {
+            task.priority = c.priority.value;
+            return true;
         }
-        Action::Delete => {
-            if task.priority != todotxt::NO_PRIORITY {
-                task.priority = todotxt::NO_PRIORITY;
-                return true;
-            }
+        Action::Delete if task.priority != todotxt::NO_PRIORITY => {
+            task.priority = todotxt::NO_PRIORITY;
+            return true;
         }
-        Action::Increase => {
-            if task.priority != 0 && task.priority != todotxt::NO_PRIORITY {
-                task.priority -= 1u8;
-                return true;
-            }
+        Action::Increase if task.priority != 0 && task.priority != todotxt::NO_PRIORITY => {
+            task.priority -= 1u8;
+            return true;
         }
-        Action::Decrease => {
-            if task.priority != todotxt::NO_PRIORITY {
-                task.priority += 1u8;
-                return true;
-            }
+        Action::Decrease if task.priority != todotxt::NO_PRIORITY => {
+            task.priority += 1u8;
+            return true;
         }
         _ => {}
     }
@@ -518,11 +510,9 @@ fn update_due_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) 
                 return true;
             }
         }
-        Action::Delete => {
-            if task.due_date.is_some() {
-                task.update_tag_with_value(todotxt::DUE_TAG, "");
-                return true;
-            }
+        Action::Delete if task.due_date.is_some() => {
+            task.update_tag_with_value(todotxt::DUE_TAG, "");
+            return true;
         }
         _ => {}
     }
@@ -555,11 +545,9 @@ fn update_thr_date(task: &mut todotxt::Task, base: chrono::NaiveDate, c: &Conf) 
                 return true;
             }
         }
-        Action::Delete => {
-            if task.threshold_date.is_some() {
-                task.update_tag_with_value(todotxt::THR_TAG, "");
-                return true;
-            }
+        Action::Delete if task.threshold_date.is_some() => {
+            task.update_tag_with_value(todotxt::THR_TAG, "");
+            return true;
         }
         _ => {}
     }
@@ -581,11 +569,9 @@ fn update_recurrence(task: &mut todotxt::Task, c: &Conf) -> bool {
                 return updated;
             }
         }
-        Action::Delete => {
-            if task.recurrence.is_some() {
-                task.update_tag_with_value(todotxt::REC_TAG, "");
-                return true;
-            }
+        Action::Delete if task.recurrence.is_some() => {
+            task.update_tag_with_value(todotxt::REC_TAG, "");
+            return true;
         }
         _ => {}
     }
@@ -700,12 +686,10 @@ fn hashtag_update_check(task: &mut todotxt::Task, hashtag: &str, act: Action) ->
                 return true;
             }
         }
-        Action::Set => {
-            if !task.hashtags.contains(&hashtag.to_string()) {
-                task.hashtags.push(hashtag.to_string());
-                task.subject = format!("{} {}", task.subject, hashtag_full);
-                return true;
-            }
+        Action::Set if !task.hashtags.contains(&hashtag.to_string()) => {
+            task.hashtags.push(hashtag.to_string());
+            task.subject = format!("{} {}", task.subject, hashtag_full);
+            return true;
         }
         Action::Replace => {
             if let Some((old, new)) = todotxt::split_tag(hashtag) {
